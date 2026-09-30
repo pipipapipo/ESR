@@ -14,38 +14,70 @@
       <p>Live camera capture with mandatory location.</p>
     </header>
 
-    <section class="card" id="setupCard">
+   <section class="card collapsible-card" id="setupCard">
+
+  <div class="collapsible-heading">
+    <div>
       <h2>1. Audit details</h2>
+      <span id="setupStatus" class="section-progress">Not completed</span>
+    </div>
 
-      <label>
-        Audit Officer
-        <select id="officerSelect" required>
-          <option value="">Select officer</option>
-          <option value="Officer A">Chu Mei</option>
-          <option value="Officer B">Chuan Kai</option>
-          <option value="Officer C">Kai Tong</option>
-        </select>
-      </label>
+    <button
+      id="setupToggleBtn"
+      class="collapse-btn"
+      type="button"
+      aria-label="Expand or collapse audit details"
+      aria-expanded="true"
+    >
+      ▼
+    </button>
+  </div>
 
-      <label>
-        Premise name
-        <input id="premiseInput" type="text" placeholder="e.g. ABC Coffeeshop" autocomplete="organization" required />
-      </label>
+  <div id="setupBody" class="collapsible-body">
 
-      <div class="status-grid">
-        <div>
-          <span class="label">Location</span>
-          <span id="locationStatus" class="badge bad">Not captured</span>
-        </div>
-        <div>
-          <span class="label">Device</span>
-          <span id="deviceStatus" class="small-text">Detecting…</span>
-        </div>
+    <label>
+      Audit Officer
+      <select id="officerSelect" required>
+        <option value="">Select officer</option>
+        <option value="Officer A">Officer A</option>
+        <option value="Officer B">Officer B</option>
+        <option value="Officer C">Officer C</option>
+      </select>
+    </label>
+
+    <label>
+      Premise name
+      <input
+        id="premiseInput"
+        type="text"
+        placeholder="e.g. ABC Coffeeshop"
+        autocomplete="organization"
+        required
+      />
+    </label>
+
+    <div class="status-grid">
+      <div>
+        <span class="label">Location</span>
+        <span id="locationStatus" class="badge bad">Not captured</span>
       </div>
 
-      <button id="locationBtn" class="secondary">Enable location</button>
-      <p id="locationDetails" class="hint">Location is required before any photo can be accepted.</p>
-    </section>
+      <div>
+        <span class="label">Device</span>
+        <span id="deviceStatus" class="small-text">Detecting…</span>
+      </div>
+    </div>
+
+    <button id="locationBtn" class="secondary">
+      Enable location
+    </button>
+
+    <p id="locationDetails" class="hint">
+      Location is required before any photo can be accepted.
+    </p>
+
+  </div>
+</section>
 
     <section class="card collapsible-card" id="selfieCard">
       <div class="collapsible-heading">
