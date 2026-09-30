@@ -2,30 +2,35 @@ const SECTION_CONFIG = [
   {
     id: "cubicles",
     name: "Cubicles",
+    onionSkin: "assets/1.png",
     help: "Overview should show the cubicle area / multiple cubicles. Close-up should clearly show one toilet bowl or squat pan.",
     closeupHint: "Centre a toilet bowl or squat pan. Avoid unrelated objects blocking the fixture."
   },
   {
     id: "general",
     name: "General Area",
+    onionSkin: "assets/2.png",
     help: "Overview should show the general floor condition. Close-up should show any stain, wetness or cleanliness issue.",
     closeupHint: "Fill the frame with the relevant floor area, stain or wetness."
   },
   {
     id: "sink",
     name: "Sink Area",
+    onionSkin: "assets/3.png",
     help: "Overview should show the vanity / sink area. Close-up should show one basin, vanity surface or tap area.",
     closeupHint: "Centre one basin and surrounding vanity surface."
   },
   {
     id: "urinal",
     name: "Urinal Area",
+    onionSkin: "assets/4.png",
     help: "Overview should show the urinal bank / urinal area. Close-up should clearly show one urinal.",
     closeupHint: "Centre one complete urinal including the bowl / outlet area."
   },
   {
     id: "misc",
     name: "Miscellaneous",
+    onionSkin: "assets/5.png",
     help: "Overview should show the miscellaneous area. Close-up should show the litter bin or other relevant amenity.",
     closeupHint: "Centre the litter bin or relevant amenity and keep it fully visible."
   }
@@ -38,8 +43,7 @@ const state = {
   sections: Object.fromEntries(SECTION_CONFIG.map(s => [s.id, { overview: null, closeup: null }])),
   selfieStream: null,
   auditStream: null,
-  activeCapture: null,
-  auditFacingMode: "environment"
+  activeCapture: null
 };
 
 const $ = (id) => document.getElementById(id);
@@ -62,9 +66,12 @@ const captureDialog = $("captureDialog");
 const dialogTitle = $("dialogTitle");
 const dialogHint = $("dialogHint");
 const auditOverlay = $("auditOverlay");
+const auditOnionSkin = $("auditOnionSkin");
+const selfieCard = $("selfieCard");
+const selfieToggleBtn = $("selfieToggleBtn");
+const selfieStatus = $("selfieStatus");
 const qualityMessage = $("qualityMessage");
 const captureAuditBtn = $("captureAuditBtn");
-const switchCameraBtn = $("switchCameraBtn");
 const closeDialogBtn = $("closeDialogBtn");
 const completionSummary = $("completionSummary");
 const downloadBtn = $("downloadBtn");
@@ -100,12 +107,19 @@ function detectDevice() {
 
 function renderSections() {
   sectionsContainer.innerHTML = "";
+
   for (const section of SECTION_CONFIG) {
     const node = template.content.cloneNode(true);
     const article = node.querySelector(".audit-section");
     article.dataset.section = section.id;
     article.querySelector("h3").textContent = section.name;
     article.querySelector(".section-help").textContent = section.help;
+
+    const toggleBtn = article.querySelector(".section-toggle-btn");
+    toggleBtn.addEventListener("click", () => {
+      const collapsed = article.classList.toggle("collapsed");
+      toggleBtn.setAttribute("aria-expanded", String(!collapsed));
+    });
 
     article.querySelectorAll(".capture-item").forEach(item => {
       const shot = item.dataset.shot;
@@ -157,6 +171,12 @@ function setLocationFailure(message) {
   updateCompletion();
 }
 
+
+selfieToggleBtn.addEventListener("click", () => {
+  const collapsed = selfieCard.classList.toggle("collapsed");
+  selfieToggleBtn.setAttribute("aria-expanded", String(!collapsed));
+});
+
 startSelfieBtn.addEventListener("click", async () => {
   if (!state.location) return alert("Enable location before taking the selfie.");
   await stopStream(state.selfieStream);
@@ -187,6 +207,10 @@ captureSelfieBtn.addEventListener("click", async () => {
   state.selfieStream = null;
   camera.srcObject = null;
   captureSelfieBtn.disabled = true;
+  selfieStatus.textContent = "Completed";
+  startSelfieBtn.textContent = "Retake selfie";
+  selfieCard.classList.add("collapsed");
+  selfieToggleBtn.setAttribute("aria-expanded", "false");
   updateCompletion();
 });
 
@@ -197,23 +221,23 @@ async function openAuditCapture(sectionId, shot) {
 
   const section = SECTION_CONFIG.find(s => s.id === sectionId);
   state.activeCapture = { sectionId, shot };
-  state.auditFacingMode = "environment";
 
   dialogTitle.textContent = `${section.name} — ${shot === "overview" ? "Overview" : "Close-up"}`;
   dialogHint.textContent = shot === "overview" ? section.help : section.closeupHint;
-  setOverlay(sectionId, shot);
-  qualityMessage.textContent = "Align the required area with the guide, then capture.";
+  auditOnionSkin.src = section.onionSkin;
+  auditOnionSkin.onerror = () => {
+    qualityMessage.textContent = `Guide image not found: ${section.onionSkin}. Camera capture can continue.`;
+    qualityMessage.className = "quality-message warn";
+  };
+  auditOnionSkin.onload = () => {
+    qualityMessage.textContent = "Align the live image as closely as possible with the example guide.";
+    qualityMessage.className = "quality-message";
+  };
+  qualityMessage.textContent = "Align the live image as closely as possible with the example guide.";
   qualityMessage.className = "quality-message";
 
   captureDialog.showModal();
   await startAuditCamera();
-}
-
-function setOverlay(sectionId, shot) {
-  auditOverlay.className = "overlay";
-  auditOverlay.classList.add(shot);
-  if (sectionId === "general") auditOverlay.classList.add(`general-${shot}`);
-  if (sectionId === "misc" && shot === "closeup") auditOverlay.classList.add("misc-closeup");
 }
 
 async function startAuditCamera() {
@@ -221,7 +245,7 @@ async function startAuditCamera() {
   try {
     state.auditStream = await navigator.mediaDevices.getUserMedia({
       video: {
-        facingMode: { ideal: state.auditFacingMode },
+        facingMode: { ideal: "environment" },
         width: { ideal: 1920 },
         height: { ideal: 1440 }
       },
@@ -229,15 +253,10 @@ async function startAuditCamera() {
     });
     auditCamera.srcObject = state.auditStream;
   } catch (err) {
-    alert(`Unable to access camera: ${err.message}`);
+    alert(`Unable to access rear camera: ${err.message}`);
     captureDialog.close();
   }
 }
-
-switchCameraBtn.addEventListener("click", async () => {
-  state.auditFacingMode = state.auditFacingMode === "environment" ? "user" : "environment";
-  await startAuditCamera();
-});
 
 captureAuditBtn.addEventListener("click", async () => {
   if (!state.activeCapture || !state.location) return;
@@ -298,6 +317,7 @@ function refreshSectionUI(sectionId) {
     const preview = item.querySelector(".mini-preview");
     const btn = item.querySelector(".capture-shot-btn");
     const record = sectionState[shot];
+
     if (record) {
       count++;
       preview.innerHTML = `<img src="${record.imageDataUrl}" alt="${sectionId} ${shot}" />`;
@@ -309,6 +329,12 @@ function refreshSectionUI(sectionId) {
   });
 
   article.querySelector(".section-progress").textContent = `${count}/2`;
+
+  if (count === 2) {
+    article.classList.add("collapsed");
+    const toggleBtn = article.querySelector(".section-toggle-btn");
+    toggleBtn.setAttribute("aria-expanded", "false");
+  }
 }
 
 async function captureFromVideo(video, canvas) {
