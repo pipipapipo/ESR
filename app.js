@@ -176,9 +176,13 @@ function setLocationFailure(message) {
 }
 
 
-selfieToggleBtn.addEventListener("click", () => {
-  const collapsed = selfieCard.classList.toggle("collapsed");
-  selfieToggleBtn.setAttribute("aria-expanded", String(!collapsed));
+setupToggleBtn.addEventListener("click", () => {
+  const collapsed = setupCard.classList.toggle("collapsed");
+
+  setupToggleBtn.setAttribute(
+    "aria-expanded",
+    String(!collapsed)
+  );
 });
 
 startSelfieBtn.addEventListener("click", async () => {
