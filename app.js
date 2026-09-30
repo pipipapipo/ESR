@@ -435,6 +435,23 @@ function allAuditPhotosComplete() {
 }
 
 function updateCompletion() {
+    const setupComplete =
+    officerSelect.value &&
+    premiseInput.value.trim() &&
+    state.location;
+
+  if (setupComplete) {
+    setupStatus.textContent = "Completed";
+
+    setupCard.classList.add("collapsed");
+
+    setupToggleBtn.setAttribute(
+      "aria-expanded",
+      "false"
+    );
+  } else {
+    setupStatus.textContent = "Not completed";
+  }
   const missing = [];
   if (!officerSelect.value) missing.push("officer");
   if (!premiseInput.value.trim()) missing.push("premise name");
