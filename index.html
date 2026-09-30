@@ -21,9 +21,9 @@
         Audit Officer
         <select id="officerSelect" required>
           <option value="">Select officer</option>
-          <option value="Officer A">Officer A</option>
-          <option value="Officer B">Officer B</option>
-          <option value="Officer C">Officer C</option>
+          <option value="Officer A">Chu Mei</option>
+          <option value="Officer B">Chuan Kai</option>
+          <option value="Officer C">Kai Tong</option>
         </select>
       </label>
 
@@ -47,24 +47,33 @@
       <p id="locationDetails" class="hint">Location is required before any photo can be accepted.</p>
     </section>
 
-    <section class="card" id="selfieCard">
-      <h2>2. Officer selfie</h2>
-      <p class="hint">Take a live front-camera selfie before starting the audit.</p>
-      <div class="camera-stage">
-        <video id="camera" playsinline autoplay muted></video>
-        <div id="overlay" class="overlay selfie-overlay" aria-hidden="true"></div>
-        <canvas id="captureCanvas" hidden></canvas>
+    <section class="card collapsible-card" id="selfieCard">
+      <div class="collapsible-heading">
+        <div>
+          <h2>2. Officer selfie</h2>
+          <span id="selfieStatus" class="section-progress">Not completed</span>
+        </div>
+        <button id="selfieToggleBtn" class="collapse-btn" type="button" aria-label="Expand or collapse officer selfie section" aria-expanded="true">▼</button>
       </div>
-      <div class="button-row">
-        <button id="startSelfieBtn">Start front camera</button>
-        <button id="captureSelfieBtn" disabled>Capture selfie</button>
+
+      <div id="selfieBody" class="collapsible-body">
+        <p class="hint">Take a live front-camera selfie before starting the audit.</p>
+        <div class="camera-stage">
+          <video id="camera" playsinline autoplay muted></video>
+          <div id="overlay" class="overlay selfie-overlay" aria-hidden="true"></div>
+          <canvas id="captureCanvas" hidden></canvas>
+        </div>
+        <div class="button-row">
+          <button id="startSelfieBtn">Start</button>
+          <button id="captureSelfieBtn" disabled>Capture</button>
+        </div>
+        <div id="selfiePreview" class="preview-slot"></div>
       </div>
-      <div id="selfiePreview" class="preview-slot"></div>
     </section>
 
     <section class="card" id="auditCard">
       <h2>3. Audit photos</h2>
-      <p class="hint">Each section requires 2 live photos: one overview and one close-up.</p>
+      <p class="hint">Each section requires 2 live photos: one overview and one close-up. The rear camera is used automatically.</p>
       <div id="sectionsContainer"></div>
     </section>
 
@@ -82,20 +91,26 @@
   <template id="sectionTemplate">
     <article class="audit-section">
       <div class="section-heading">
-        <h3></h3>
-        <span class="section-progress">0/2</span>
-      </div>
-      <p class="section-help"></p>
-      <div class="capture-grid">
-        <div class="capture-item" data-shot="overview">
-          <h4>Overview</h4>
-          <div class="mini-preview"></div>
-          <button class="capture-shot-btn">Take overview</button>
+        <div>
+          <h3></h3>
+          <span class="section-progress">0/2</span>
         </div>
-        <div class="capture-item" data-shot="closeup">
-          <h4>Close-up</h4>
-          <div class="mini-preview"></div>
-          <button class="capture-shot-btn">Take close-up</button>
+        <button class="collapse-btn section-toggle-btn" type="button" aria-label="Expand or collapse section" aria-expanded="true">▼</button>
+      </div>
+
+      <div class="section-body">
+        <p class="section-help"></p>
+        <div class="capture-grid">
+          <div class="capture-item" data-shot="overview">
+            <h4>Overview</h4>
+            <div class="mini-preview"></div>
+            <button class="capture-shot-btn">Take overview</button>
+          </div>
+          <div class="capture-item" data-shot="closeup">
+            <h4>Close-up</h4>
+            <div class="mini-preview"></div>
+            <button class="capture-shot-btn">Take close-up</button>
+          </div>
         </div>
       </div>
     </article>
@@ -113,14 +128,14 @@
 
       <div class="camera-stage large">
         <video id="auditCamera" playsinline autoplay muted></video>
+        <img id="auditOnionSkin" class="onion-skin" src="" alt="" aria-hidden="true" />
         <div id="auditOverlay" class="overlay" aria-hidden="true"></div>
         <canvas id="auditCanvas" hidden></canvas>
       </div>
 
-      <div id="qualityMessage" class="quality-message">Align the component with the guide.</div>
+      <div id="qualityMessage" class="quality-message">Align the live image as closely as possible with the example guide.</div>
       <div class="button-row">
         <button id="captureAuditBtn">Capture</button>
-        <button id="switchCameraBtn" class="secondary">Switch camera</button>
       </div>
     </div>
   </dialog>
