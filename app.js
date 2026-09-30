@@ -2,7 +2,7 @@ const SECTION_CONFIG = [
   {
     id: "cubicles",
     name: "Cubicles",
-    onionSkin: "assets/1.png",
+    onionSkin: "IMG-20260930-WA0009.jpg",
     help: "Overview should show the cubicle area / multiple cubicles. Close-up should clearly show one toilet bowl or squat pan.",
     closeupHint: "Centre a toilet bowl or squat pan. Avoid unrelated objects blocking the fixture."
   },
