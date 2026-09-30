@@ -67,6 +67,10 @@ const dialogTitle = $("dialogTitle");
 const dialogHint = $("dialogHint");
 const auditOverlay = $("auditOverlay");
 const auditOnionSkin = $("auditOnionSkin");
+const setupCard = $("setupCard");
+const setupToggleBtn = $("setupToggleBtn");
+const setupStatus = $("setupStatus");
+
 const selfieCard = $("selfieCard");
 const selfieToggleBtn = $("selfieToggleBtn");
 const selfieStatus = $("selfieStatus");
