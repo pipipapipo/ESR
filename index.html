@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#ffffff" />
+  <title>ESR Audit Capture</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="app-header">
+      <h1>ESR Audit Capture</h1>
+      <p>Live camera capture with mandatory location.</p>
+    </header>
+
+    <section class="card" id="setupCard">
+      <h2>1. Audit details</h2>
+
+      <label>
+        Audit Officer
+        <select id="officerSelect" required>
+          <option value="">Select officer</option>
+          <option value="Officer A">Officer A</option>
+          <option value="Officer B">Officer B</option>
+          <option value="Officer C">Officer C</option>
+        </select>
+      </label>
+
+      <label>
+        Premise name
+        <input id="premiseInput" type="text" placeholder="e.g. ABC Coffeeshop" autocomplete="organization" required />
+      </label>
+
+      <div class="status-grid">
+        <div>
+          <span class="label">Location</span>
+          <span id="locationStatus" class="badge bad">Not captured</span>
+        </div>
+        <div>
+          <span class="label">Device</span>
+          <span id="deviceStatus" class="small-text">Detecting…</span>
+        </div>
+      </div>
+
+      <button id="locationBtn" class="secondary">Enable location</button>
+      <p id="locationDetails" class="hint">Location is required before any photo can be accepted.</p>
+    </section>
+
+    <section class="card" id="selfieCard">
+      <h2>2. Officer selfie</h2>
+      <p class="hint">Take a live front-camera selfie before starting the audit.</p>
+      <div class="camera-stage">
+        <video id="camera" playsinline autoplay muted></video>
+        <div id="overlay" class="overlay selfie-overlay" aria-hidden="true"></div>
+        <canvas id="captureCanvas" hidden></canvas>
+      </div>
+      <div class="button-row">
+        <button id="startSelfieBtn">Start front camera</button>
+        <button id="captureSelfieBtn" disabled>Capture selfie</button>
+      </div>
+      <div id="selfiePreview" class="preview-slot"></div>
+    </section>
+
+    <section class="card" id="auditCard">
+      <h2>3. Audit photos</h2>
+      <p class="hint">Each section requires 2 live photos: one overview and one close-up.</p>
+      <div id="sectionsContainer"></div>
+    </section>
+
+    <section class="card">
+      <h2>4. Review & export</h2>
+      <div id="completionSummary" class="summary-box">Complete the required fields and captures.</div>
+      <div class="button-row">
+        <button id="downloadBtn" disabled>Download audit package</button>
+        <button id="resetBtn" class="danger">Reset audit</button>
+      </div>
+      <p class="hint">Static GitHub Pages cannot store submissions centrally. This version exports a JSON audit package with photo data and capture metadata.</p>
+    </section>
+  </main>
+
+  <template id="sectionTemplate">
+    <article class="audit-section">
+      <div class="section-heading">
+        <h3></h3>
+        <span class="section-progress">0/2</span>
+      </div>
+      <p class="section-help"></p>
+      <div class="capture-grid">
+        <div class="capture-item" data-shot="overview">
+          <h4>Overview</h4>
+          <div class="mini-preview"></div>
+          <button class="capture-shot-btn">Take overview</button>
+        </div>
+        <div class="capture-item" data-shot="closeup">
+          <h4>Close-up</h4>
+          <div class="mini-preview"></div>
+          <button class="capture-shot-btn">Take close-up</button>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <dialog id="captureDialog">
+    <div class="dialog-inner">
+      <div class="dialog-title-row">
+        <div>
+          <h3 id="dialogTitle">Capture</h3>
+          <p id="dialogHint" class="hint"></p>
+        </div>
+        <button id="closeDialogBtn" class="icon-btn" aria-label="Close">×</button>
+      </div>
+
+      <div class="camera-stage large">
+        <video id="auditCamera" playsinline autoplay muted></video>
+        <div id="auditOverlay" class="overlay" aria-hidden="true"></div>
+        <canvas id="auditCanvas" hidden></canvas>
+      </div>
+
+      <div id="qualityMessage" class="quality-message">Align the component with the guide.</div>
+      <div class="button-row">
+        <button id="captureAuditBtn">Capture</button>
+        <button id="switchCameraBtn" class="secondary">Switch camera</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
