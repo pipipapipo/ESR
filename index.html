@@ -1,177 +1,490 @@
+
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#ffffff" />
   <title>ESR Audit Capture</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
   <main class="app-shell">
+
     <header class="app-header">
       <h1>ESR Audit Capture</h1>
       <p>Live camera capture with mandatory location.</p>
     </header>
 
-   <section class="card collapsible-card" id="setupCard">
+    <!-- =========================================
+         SECTION 1: AUDIT DETAILS
+    ========================================== -->
 
-  <div class="collapsible-heading">
-    <div>
-      <h2>1. Audit details</h2>
-      <span id="setupStatus" class="section-progress">Not completed</span>
-    </div>
+    <section class="card collapsible-card" id="setupCard">
 
-    <button
-      id="setupToggleBtn"
-      class="collapse-btn"
-      type="button"
-      aria-label="Expand or collapse audit details"
-      aria-expanded="true"
-    >
-      ▼
-    </button>
-  </div>
-
-  <div id="setupBody" class="collapsible-body">
-
-    <label>
-      Audit Officer
-      <select id="officerSelect" required>
-        <option value="">Select officer</option>
-        <option value="Officer A">Ng Wei Hong</option>
-        <option value="Officer B">Chen Hanjie</option>
-        <option value="Officer C">Tan Chu Mei</option>
-      </select>
-    </label>
-
-    <label>
-      Premise name
-      <input
-        id="premiseInput"
-        type="text"
-        placeholder="e.g. ABC Coffeeshop"
-        autocomplete="organization"
-        required
-      />
-    </label>
-
-    <div class="status-grid">
-      <div>
-        <span class="label">Location</span>
-        <span id="locationStatus" class="badge bad">Not captured</span>
-      </div>
-
-      <div>
-        <span class="label">Device</span>
-        <span id="deviceStatus" class="small-text">Detecting…</span>
-      </div>
-    </div>
-
-    <button id="locationBtn" class="secondary">
-      Enable location
-    </button>
-
-    <p id="locationDetails" class="hint">
-      Location is required before any photo can be accepted.
-    </p>
-
-  </div>
-</section>
-
-    <section class="card collapsible-card" id="selfieCard">
       <div class="collapsible-heading">
         <div>
+          <h2>1. Audit details</h2>
+          <span id="setupStatus" class="section-progress">
+            Not completed
+          </span>
+        </div>
+
+        <button
+          id="setupToggleBtn"
+          class="collapse-btn"
+          type="button"
+          aria-label="Expand or collapse audit details"
+          aria-expanded="true"
+        >▼</button>
+      </div>
+
+      <div id="setupBody" class="collapsible-body">
+
+        <label for="officerSelect">
+          Audit Officer
+          <select id="officerSelect" required>
+            <option value="">Select officer</option>
+            <option value="Officer A">Ng Wei Hong</option>
+            <option value="Officer B">Chen Hanjie</option>
+            <option value="Officer C">Tan Chu Mei</option>
+          </select>
+        </label>
+
+        <!-- Shown after officer selection -->
+        <div id="assignmentDetails" hidden>
+
+          <label for="auditDateTime">
+            Audit Date & Time
+            <input
+              id="auditDateTime"
+              type="text"
+              readonly
+              placeholder="Automatically recorded"
+            />
+          </label>
+
+          <p class="hint">
+            Date and time are automatically recorded
+            when the audit officer is selected.
+          </p>
+
+          <!-- Assigned premises -->
+          <fieldset class="premise-fieldset">
+
+            <legend>Assigned Premise</legend>
+
+            <label class="premise-option">
+              <input
+                type="radio"
+                name="premiseChoice"
+                value="am"
+              />
+              <span>
+                <strong>ABC Coffee Shop</strong>
+                <small>AM Assignment</small>
+              </span>
+            </label>
+
+            <label class="premise-option">
+              <input
+                type="radio"
+                name="premiseChoice"
+                value="pm"
+              />
+              <span>
+                <strong>Habibi Coffee Shop</strong>
+                <small>PM Assignment</small>
+              </span>
+            </label>
+
+            <label class="premise-option">
+              <input
+                type="radio"
+                name="premiseChoice"
+                value="other"
+              />
+              <span>
+                <strong>Others</strong>
+                <small>Ad-hoc Inspection</small>
+              </span>
+            </label>
+
+          </fieldset>
+
+          <!-- Only visible when Others is selected -->
+          <div id="otherPremiseGroup" hidden>
+
+            <label for="otherPremiseInput">
+              Ad-hoc Premise Name
+              <input
+                id="otherPremiseInput"
+                type="text"
+                placeholder="Enter premise name"
+                autocomplete="organization"
+              />
+            </label>
+
+          </div>
+
+          <!-- Location and device -->
+          <div class="status-grid">
+
+            <div>
+              <span class="label">Location</span>
+              <span
+                id="locationStatus"
+                class="badge bad"
+              >
+                Not captured
+              </span>
+            </div>
+
+            <div>
+              <span class="label">Device</span>
+              <span
+                id="deviceStatus"
+                class="small-text"
+              >
+                Detecting…
+              </span>
+            </div>
+
+          </div>
+
+          <button
+            id="locationBtn"
+            class="secondary"
+            type="button"
+          >
+            Enable location
+          </button>
+
+          <p id="locationDetails" class="hint">
+            GPS location is mandatory before proceeding.
+          </p>
+
+        </div>
+      </div>
+    </section>
+
+
+    <!-- =========================================
+         SECTION 2: OFFICER SELFIE
+    ========================================== -->
+
+    <section
+      class="card collapsible-card"
+      id="selfieCard"
+    >
+
+      <div class="collapsible-heading">
+
+        <div>
           <h2>2. Officer selfie</h2>
-          <span id="selfieStatus" class="section-progress">Not completed</span>
+          <span
+            id="selfieStatus"
+            class="section-progress"
+          >
+            Not completed
+          </span>
         </div>
-        <button id="selfieToggleBtn" class="collapse-btn" type="button" aria-label="Expand or collapse officer selfie section" aria-expanded="true">▼</button>
+
+        <button
+          id="selfieToggleBtn"
+          class="collapse-btn"
+          type="button"
+          aria-label="Expand or collapse officer selfie section"
+          aria-expanded="true"
+        >▼</button>
+
       </div>
 
-      <div id="selfieBody" class="collapsible-body">
-        <p class="hint">Take a live front-camera selfie before starting the audit.</p>
+      <div
+        id="selfieBody"
+        class="collapsible-body"
+      >
+
+        <p class="hint">
+          Take a live front-camera selfie before
+          starting the audit.
+        </p>
+
         <div class="camera-stage">
-          <video id="camera" playsinline autoplay muted></video>
-          <div id="overlay" class="overlay selfie-overlay" aria-hidden="true"></div>
-          <canvas id="captureCanvas" hidden></canvas>
+
+          <video
+            id="camera"
+            playsinline
+            autoplay
+            muted
+          ></video>
+
+          <div
+            id="overlay"
+            class="overlay selfie-overlay"
+            aria-hidden="true"
+          ></div>
+
+          <canvas
+            id="captureCanvas"
+            hidden
+          ></canvas>
+
         </div>
+
         <div class="button-row">
-          <button id="startSelfieBtn">Start</button>
-          <button id="captureSelfieBtn" disabled>Capture</button>
+
+          <button
+            id="startSelfieBtn"
+            type="button"
+          >
+            Start
+          </button>
+
+          <button
+            id="captureSelfieBtn"
+            type="button"
+            disabled
+          >
+            Capture
+          </button>
+
         </div>
-        <div id="selfiePreview" class="preview-slot"></div>
+
+        <div
+          id="selfiePreview"
+          class="preview-slot"
+        ></div>
+
       </div>
     </section>
 
-    <section class="card" id="auditCard">
+
+    <!-- =========================================
+         SECTION 3: AUDIT PHOTOGRAPHS
+    ========================================== -->
+
+    <section
+      class="card"
+      id="auditCard"
+    >
+
       <h2>3. Audit photos</h2>
-      <p class="hint">Each section requires 2 live photos: one overview and one close-up. The rear camera is used automatically.</p>
+
+      <p class="hint">
+        Each section requires 2 live photographs:
+        one overview and one close-up.
+        The rear camera is used automatically.
+      </p>
+
       <div id="sectionsContainer"></div>
+
     </section>
+
+
+    <!-- =========================================
+         SECTION 4: REVIEW AND EXPORT
+    ========================================== -->
 
     <section class="card">
+
       <h2>4. Review & export</h2>
-      <div id="completionSummary" class="summary-box">Complete the required fields and captures.</div>
-      <div class="button-row">
-        <button id="downloadBtn" disabled>Download audit package</button>
-        <button id="resetBtn" class="danger">Reset audit</button>
+
+      <div
+        id="completionSummary"
+        class="summary-box"
+      >
+        Complete the required fields and captures.
       </div>
-      <p class="hint">Static GitHub Pages cannot store submissions centrally. This version exports a JSON audit package with photo data and capture metadata.</p>
+
+      <div class="button-row">
+
+        <button
+          id="downloadBtn"
+          type="button"
+          disabled
+        >
+          Download audit package
+        </button>
+
+        <button
+          id="resetBtn"
+          class="danger"
+          type="button"
+        >
+          Reset audit
+        </button>
+
+      </div>
+
+      <p class="hint">
+        This GitHub Pages prototype exports a JSON
+        audit package containing photographs,
+        location and capture metadata.
+      </p>
+
     </section>
+
   </main>
 
+
+  <!-- =========================================
+       AUDIT SECTION TEMPLATE
+  ========================================== -->
+
   <template id="sectionTemplate">
+
     <article class="audit-section">
+
       <div class="section-heading">
+
         <div>
           <h3></h3>
           <span class="section-progress">0/2</span>
         </div>
-        <button class="collapse-btn section-toggle-btn" type="button" aria-label="Expand or collapse section" aria-expanded="true">▼</button>
+
+        <button
+          class="collapse-btn section-toggle-btn"
+          type="button"
+          aria-label="Expand or collapse section"
+          aria-expanded="true"
+        >▼</button>
+
       </div>
 
       <div class="section-body">
+
         <p class="section-help"></p>
+
         <div class="capture-grid">
-          <div class="capture-item" data-shot="overview">
+
+          <div
+            class="capture-item"
+            data-shot="overview"
+          >
+
             <h4>Overview</h4>
+
             <div class="mini-preview"></div>
-            <button class="capture-shot-btn">Take overview</button>
+
+            <button
+              class="capture-shot-btn"
+              type="button"
+            >
+              Take overview
+            </button>
+
           </div>
-          <div class="capture-item" data-shot="closeup">
+
+          <div
+            class="capture-item"
+            data-shot="closeup"
+          >
+
             <h4>Close-up</h4>
+
             <div class="mini-preview"></div>
-            <button class="capture-shot-btn">Take close-up</button>
+
+            <button
+              class="capture-shot-btn"
+              type="button"
+            >
+              Take close-up
+            </button>
+
           </div>
+
         </div>
       </div>
     </article>
   </template>
 
+
+  <!-- =========================================
+       LIVE AUDIT CAMERA DIALOG
+  ========================================== -->
+
   <dialog id="captureDialog">
+
     <div class="dialog-inner">
+
       <div class="dialog-title-row">
+
         <div>
           <h3 id="dialogTitle">Capture</h3>
-          <p id="dialogHint" class="hint"></p>
+          <p
+            id="dialogHint"
+            class="hint"
+          ></p>
         </div>
-        <button id="closeDialogBtn" class="icon-btn" aria-label="Close">×</button>
+
+        <button
+          id="closeDialogBtn"
+          class="icon-btn"
+          type="button"
+          aria-label="Close"
+        >
+          ×
+        </button>
+
       </div>
 
       <div class="camera-stage large">
-        <video id="auditCamera" playsinline autoplay muted></video>
-        <img id="auditOnionSkin" class="onion-skin" src="" alt="" aria-hidden="true" />
-        <div id="auditOverlay" class="overlay" aria-hidden="true"></div>
-        <canvas id="auditCanvas" hidden></canvas>
+
+        <video
+          id="auditCamera"
+          playsinline
+          autoplay
+          muted
+        ></video>
+
+        <!-- 25% opacity reference image -->
+        <img
+          id="auditOnionSkin"
+          class="onion-skin"
+          src=""
+          alt=""
+          aria-hidden="true"
+        />
+
+        <div
+          id="auditOverlay"
+          class="overlay"
+          aria-hidden="true"
+        ></div>
+
+        <canvas
+          id="auditCanvas"
+          hidden
+        ></canvas>
+
       </div>
 
-      <div id="qualityMessage" class="quality-message">Align the live image as closely as possible with the example guide.</div>
-      <div class="button-row">
-        <button id="captureAuditBtn">Capture</button>
+      <div
+        id="qualityMessage"
+        class="quality-message"
+      >
+        Align the live image as closely as possible
+        with the example guide.
       </div>
+
+      <div class="button-row">
+
+        <button
+          id="captureAuditBtn"
+          type="button"
+        >
+          Capture
+        </button>
+
+      </div>
+
     </div>
   </dialog>
 
   <script src="app.js" defer></script>
+
 </body>
 </html>
