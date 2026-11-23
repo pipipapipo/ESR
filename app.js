@@ -1,22 +1,15 @@
 
 "use strict";
 
-/* =====================================================
-   ESR AUDIT CAPTURE - COMPLETE APPLICATION
-   Version: 2026-11-23
-   Static GitHub Pages mock-up
-===================================================== */
+// =====================================================
+// ESR AUDIT CAPTURE - MOCK-UP VERSION 4
+// =====================================================
 
-/* =====================================================
-   1. CONFIGURATION
-===================================================== */
+const FORM_KEY = "esr-form-v4";
+const DB_NAME = "esr-images-v4";
+const PHOTO_STORE = "photos";
 
-const STORAGE_KEY = "esr-audit-draft-v3";
-const DB_NAME = "esr-audit-photos-v3";
-const DB_STORE = "photos";
-
-const MAX_GPS_AGE_MS = 5 * 60 * 1000;
-const MAX_GPS_ACCURACY_M = 150;
+// FIXED MOCK-UP OFFICER SCHEDULES
 
 const ASSIGNMENTS = {
   "Officer A": {
@@ -36,236 +29,263 @@ const ASSIGNMENTS = {
   }
 };
 
-/*
-  Keep your existing onion-skin filenames here.
+// SIX AUDIT AREAS - ONE PHOTO EACH
 
-  The first image uses the filename from your
-  earlier code. The remaining five use the
-  assets folder.
-
-  Change these paths if your actual filenames
-  differ.
-
-  The onion skin is displayed at 25% opacity
-  through styles.css. It is not burned into
-  the captured photograph.
-*/
-
-const SECTION_CONFIG = [
+const AREAS = [
   {
     id: "cubicles",
     name: "Cubicles",
-    onionSkin: "IMG-20260930-WA0009.jpg",
-    help:
-      "Capture the cubicle area, including toilet " +
-      "bowl or squat pan and surrounding floor."
+    guide: "IMG-20260930-WA0009.jpg",
+    help: "Show the cubicle, bowl or squat pan and nearby floor."
   },
   {
     id: "general",
     name: "General Area",
-    onionSkin: "assets/2.png",
-    help:
-      "Capture the general toilet floor and " +
-      "common circulation area."
+    guide: "assets/2.png",
+    help: "Show the general toilet floor and circulation area."
   },
   {
     id: "sink",
     name: "Sink Area",
-    onionSkin: "assets/3.png",
-    help:
-      "Capture the wash-hand basins, vanity " +
-      "tops and surrounding sink area."
+    guide: "assets/3.png",
+    help: "Show basins, vanity tops and surrounding surfaces."
   },
   {
     id: "urinal",
     name: "Urinal Area",
-    onionSkin: "assets/4.png",
-    help:
-      "Capture the urinal area, including " +
-      "the urinal surfaces and visible fittings."
+    guide: "assets/4.png",
+    help: "Show urinals and their visible fittings."
   },
   {
     id: "misc",
     name: "Miscellaneous",
-    onionSkin: "assets/5.png",
-    help:
-      "Capture the litter bin and relevant " +
-      "miscellaneous toilet amenities."
+    guide: "assets/5.png",
+    help: "Show litter bins and other relevant amenities."
   },
   {
     id: "tray",
     name: "Tray Return",
-    onionSkin: "assets/6.png",
-    help:
-      "Capture the tray return infrastructure, " +
-      "including racks, shelves and trays."
+    guide: "assets/6.png",
+    help: "Show tray return racks, shelves and trays."
   }
 ];
 
-/* =====================================================
-   2. APPLICATION STATE
-===================================================== */
+const $ = id => document.getElementById(id);
 
-function emptySections() {
-  return Object.fromEntries(
-    SECTION_CONFIG.map(section => [
-      section.id,
-      { overview: null }
-    ])
-  );
-}
+// APPLICATION STATE
 
 const state = {
   officer: "",
-  premiseChoice: "",
-  otherPremise: "",
-  auditStartedAt: null,
+  choice: "",
+  other: "",
+  startedAt: null,
 
   location: null,
   initialLocation: null,
 
-  device: {},
-
   selfie: null,
+  eccPhoto: null,
+  sfaPhoto: null,
 
-  ecc: {
-    photo: null,
-    name: "",
-    expiry: "",
-    ocrText: "",
-    ocrCompleted: false
-  },
+  eccName: "",
+  eccNumber: "",
+  eccExpiry: "",
+  eccOcrText: "",
+  eccOcrDone: false,
 
-  sfa: {
-    photo: null,
-    licenceNumber: "",
-    premiseName: "",
-    expiry: "",
-    ocrText: "",
-    ocrCompleted: false
-  },
-
-  sections: emptySections(),
+  photos: Object.fromEntries(
+    AREAS.map(a => [a.id, null])
+  ),
 
   selfieStream: null,
-  auditStream: null,
-  activeCapture: null,
+  rearStream: null,
+  active: null,
 
   setupWasComplete: false,
-  verificationWasComplete: false,
-
-  saving: false
+  verificationWasComplete: false
 };
 
-const $ = id => document.getElementById(id);
+// =====================================================
+// 1. LOCAL FORM STORAGE
+// =====================================================
 
-/* =====================================================
-   3. DOM ELEMENTS
-===================================================== */
+function saveForm() {
+  try {
+    localStorage.setItem(
+      FORM_KEY,
+      JSON.stringify({
+        officer: state.officer,
+        choice: state.choice,
+        other: state.other,
+        startedAt: state.startedAt,
 
-const officerSelect = $("officerSelect");
-const assignmentDetails = $("assignmentDetails");
-const auditDateTime = $("auditDateTime");
-const amPremiseName = $("amPremiseName");
-const pmPremiseName = $("pmPremiseName");
-const otherPremiseGroup = $("otherPremiseGroup");
-const otherPremiseInput = $("otherPremiseInput");
+        location: state.location,
+        initialLocation: state.initialLocation,
 
-const setupCard = $("setupCard");
-const setupToggleBtn = $("setupToggleBtn");
-const setupStatus = $("setupStatus");
+        eccName: state.eccName,
+        eccNumber: state.eccNumber,
+        eccExpiry: state.eccExpiry,
+        eccOcrText: state.eccOcrText,
+        eccOcrDone: state.eccOcrDone
+      })
+    );
 
-const locationBtn = $("locationBtn");
-const locationStatus = $("locationStatus");
-const locationDetails = $("locationDetails");
-const deviceStatus = $("deviceStatus");
+    $("draftStatus").textContent =
+      "Draft saved on this device";
 
-const selfieCard = $("selfieCard");
-const selfieToggleBtn = $("selfieToggleBtn");
-const selfieStatus = $("selfieStatus");
+  } catch (e) {
+    $("draftStatus").textContent =
+      "Draft saving unavailable";
 
-const startSelfieBtn = $("startSelfieBtn");
-const captureSelfieBtn = $("captureSelfieBtn");
-const selfiePreview = $("selfiePreview");
-
-const camera = $("camera");
-const captureCanvas = $("captureCanvas");
-
-const verificationCard = $("verificationCard");
-const verificationToggleBtn =
-  $("verificationToggleBtn");
-const verificationStatus = $("verificationStatus");
-
-const captureEccBtn = $("captureEccBtn");
-const runEccOcrBtn = $("runEccOcrBtn");
-const eccPreview = $("eccPreview");
-const eccOcrStatus = $("eccOcrStatus");
-const eccName = $("eccName");
-const eccExpiry = $("eccExpiry");
-const eccValidityStatus = $("eccValidityStatus");
-const eccValidityDetails = $("eccValidityDetails");
-
-const captureSfaBtn = $("captureSfaBtn");
-const runSfaOcrBtn = $("runSfaOcrBtn");
-const sfaPreview = $("sfaPreview");
-const sfaOcrStatus = $("sfaOcrStatus");
-const sfaLicenceNumber = $("sfaLicenceNumber");
-const sfaPremiseName = $("sfaPremiseName");
-const sfaExpiry = $("sfaExpiry");
-const sfaValidityStatus = $("sfaValidityStatus");
-const sfaValidityDetails = $("sfaValidityDetails");
-
-const sectionsContainer = $("sectionsContainer");
-const sectionTemplate = $("sectionTemplate");
-
-const captureDialog = $("captureDialog");
-const dialogTitle = $("dialogTitle");
-const dialogHint = $("dialogHint");
-
-const auditCamera = $("auditCamera");
-const auditCanvas = $("auditCanvas");
-const auditOnionSkin = $("auditOnionSkin");
-
-const qualityMessage = $("qualityMessage");
-const captureAuditBtn = $("captureAuditBtn");
-const closeDialogBtn = $("closeDialogBtn");
-
-const completionSummary = $("completionSummary");
-const downloadBtn = $("downloadBtn");
-const resetBtn = $("resetBtn");
-const headerResetBtn = $("headerResetBtn");
-const draftStatus = $("draftStatus");
-
-/* =====================================================
-   4. GENERAL HELPERS
-===================================================== */
-
-function setDraftStatus(message) {
-  if (draftStatus) {
-    draftStatus.textContent = message;
+    console.warn(e);
   }
 }
 
-function safeText(value) {
-  return String(value ?? "").trim();
+function restoreForm() {
+  try {
+    const saved = JSON.parse(
+      localStorage.getItem(FORM_KEY) || "null"
+    );
+
+    if (!saved) return;
+
+    state.officer = ASSIGNMENTS[saved.officer]
+      ? saved.officer
+      : "";
+
+    state.choice = ["am", "pm", "other"].includes(
+      saved.choice
+    )
+      ? saved.choice
+      : "";
+
+    state.other = saved.other || "";
+    state.startedAt = saved.startedAt || null;
+
+    state.location = saved.location || null;
+    state.initialLocation =
+      saved.initialLocation || null;
+
+    state.eccName = saved.eccName || "";
+    state.eccNumber = saved.eccNumber || "";
+    state.eccExpiry = saved.eccExpiry || "";
+
+    state.eccOcrText = saved.eccOcrText || "";
+    state.eccOcrDone = Boolean(
+      saved.eccOcrDone
+    );
+
+    $("draftStatus").textContent =
+      "Saved draft restored";
+
+  } catch (e) {
+    console.warn("Draft recovery failed", e);
+  }
 }
 
-function isValidDateString(value) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return false;
-  }
+// =====================================================
+// 2. INDEXEDDB FOR PHOTOGRAPH RECOVERY
+// =====================================================
 
-  const [y, m, d] = value.split("-").map(Number);
-  const test = new Date(Date.UTC(y, m - 1, d));
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
 
-  return (
-    test.getUTCFullYear() === y &&
-    test.getUTCMonth() === m - 1 &&
-    test.getUTCDate() === d
+    req.onupgradeneeded = () => {
+      if (
+        !req.result.objectStoreNames.contains(
+          PHOTO_STORE
+        )
+      ) {
+        req.result.createObjectStore(
+          PHOTO_STORE
+        );
+      }
+    };
+
+    req.onsuccess = () => resolve(
+      req.result
+    );
+
+    req.onerror = () => reject(
+      req.error
+    );
+  });
+}
+
+async function dbAction(mode, operation) {
+  const db = await openDB();
+
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(
+      PHOTO_STORE,
+      mode
+    );
+
+    let result;
+
+    const request = operation(
+      tx.objectStore(PHOTO_STORE)
+    );
+
+    if (request) {
+      request.onsuccess = () => {
+        result = request.result;
+      };
+    }
+
+    tx.oncomplete = () => {
+      db.close();
+      resolve(result);
+    };
+
+    tx.onerror = () => {
+      db.close();
+      reject(tx.error);
+    };
+
+    tx.onabort = () => {
+      db.close();
+      reject(tx.error);
+    };
+  });
+}
+
+const putPhoto = (key, record) =>
+  dbAction(
+    "readwrite",
+    store => store.put(record, key)
   );
-}
 
-function singaporeDateString() {
+const getPhoto = key =>
+  dbAction(
+    "readonly",
+    store => store.get(key)
+  );
+
+const clearPhotos = () =>
+  dbAction(
+    "readwrite",
+    store => store.clear()
+  );
+
+// =====================================================
+// 3. DATE AND TIME
+// =====================================================
+
+const singaporeHour = () =>
+  Number(
+    new Intl.DateTimeFormat(
+      "en-GB",
+      {
+        timeZone: "Asia/Singapore",
+        hour: "2-digit",
+        hourCycle: "h23"
+      }
+    ).format(new Date())
+  );
+
+const todaySG = () => {
   const parts = new Intl.DateTimeFormat(
     "en-GB",
     {
@@ -276,379 +296,147 @@ function singaporeDateString() {
     }
   ).formatToParts(new Date());
 
-  const get = type =>
-    parts.find(p => p.type === type)?.value;
-
-  return `${get("year")}-${get("month")}-${get("day")}`;
-}
-
-function singaporeHour() {
-  return Number(
-    new Intl.DateTimeFormat(
-      "en-GB",
-      {
-        timeZone: "Asia/Singapore",
-        hour: "2-digit",
-        hourCycle: "h23"
-      }
-    ).format(new Date())
-  );
-}
-
-function singaporeDateTime() {
-  return new Intl.DateTimeFormat(
-    "en-SG",
-    {
-      timeZone: "Asia/Singapore",
-      dateStyle: "medium",
-      timeStyle: "medium"
-    }
-  ).format(new Date());
-}
-
-function getPremise() {
-  if (state.premiseChoice === "other") {
-    return safeText(state.otherPremise);
-  }
+  const value = type =>
+    parts.find(
+      p => p.type === type
+    ).value;
 
   return (
-    ASSIGNMENTS[state.officer]?.[
-      state.premiseChoice
-    ] || ""
+    `${value("year")}-` +
+    `${value("month")}-` +
+    `${value("day")}`
   );
-}
+};
 
-function getOfficerName() {
-  return ASSIGNMENTS[state.officer]?.name || "";
-}
+const officerName = () =>
+  ASSIGNMENTS[state.officer]?.name || "";
 
-function sanitizeFilename(text) {
-  return (text || "premise")
-    .replace(/[^a-z0-9-_]+/gi, "-")
-    .slice(0, 80);
-}
-
-function setBadge(element, text, type) {
-  element.textContent = text;
-  element.className = `badge ${type}`;
-}
-
-/* =====================================================
-   5. LOCAL STORAGE - FORM DATA
-===================================================== */
-
-function saveDraft() {
-  const draft = {
-    officer: state.officer,
-    premiseChoice: state.premiseChoice,
-    otherPremise: state.otherPremise,
-    auditStartedAt: state.auditStartedAt,
-
-    location: state.location,
-    initialLocation: state.initialLocation,
-
-    ecc: {
-      name: state.ecc.name,
-      expiry: state.ecc.expiry,
-      ocrText: state.ecc.ocrText,
-      ocrCompleted: state.ecc.ocrCompleted
-    },
-
-    sfa: {
-      licenceNumber: state.sfa.licenceNumber,
-      premiseName: state.sfa.premiseName,
-      expiry: state.sfa.expiry,
-      ocrText: state.sfa.ocrText,
-      ocrCompleted: state.sfa.ocrCompleted
-    }
-  };
-
-  try {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(draft)
+function premiseName() {
+  return state.choice === "other"
+    ? state.other.trim()
+    : (
+      ASSIGNMENTS[state.officer]?.[
+        state.choice
+      ] || ""
     );
-
-    setDraftStatus("Draft saved on this device");
-
-  } catch (error) {
-    console.warn("Draft save failed:", error);
-    setDraftStatus("Unable to save draft");
-  }
 }
 
-function restoreDraft() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+// =====================================================
+// 4. OFFICER SELECTION
+// =====================================================
 
-    if (!raw) {
-      setDraftStatus("New audit");
-      return;
-    }
-
-    const saved = JSON.parse(raw);
-
-    state.officer =
-      ASSIGNMENTS[saved.officer]
-        ? saved.officer
-        : "";
-
-    state.premiseChoice =
-      ["am", "pm", "other"].includes(
-        saved.premiseChoice
-      )
-        ? saved.premiseChoice
-        : "";
-
-    state.otherPremise =
-      saved.otherPremise || "";
-
-    state.auditStartedAt =
-      saved.auditStartedAt || null;
-
-    state.location = saved.location || null;
-
-    state.initialLocation =
-      saved.initialLocation || null;
-
-    if (saved.ecc) {
-      state.ecc.name = saved.ecc.name || "";
-      state.ecc.expiry = saved.ecc.expiry || "";
-      state.ecc.ocrText = saved.ecc.ocrText || "";
-      state.ecc.ocrCompleted =
-        Boolean(saved.ecc.ocrCompleted);
-    }
-
-    if (saved.sfa) {
-      state.sfa.licenceNumber =
-        saved.sfa.licenceNumber || "";
-
-      state.sfa.premiseName =
-        saved.sfa.premiseName || "";
-
-      state.sfa.expiry =
-        saved.sfa.expiry || "";
-
-      state.sfa.ocrText =
-        saved.sfa.ocrText || "";
-
-      state.sfa.ocrCompleted =
-        Boolean(saved.sfa.ocrCompleted);
-    }
-
-    setDraftStatus("Previous draft restored");
-
-  } catch (error) {
-    console.warn("Draft restore failed:", error);
-    setDraftStatus("Unable to restore draft");
-  }
-}
-
-/* =====================================================
-   6. INDEXEDDB - PHOTOGRAPHS
-===================================================== */
-
-function openPhotoDB() {
-  return new Promise((resolve, reject) => {
-    if (!window.indexedDB) {
-      reject(
-        new Error("IndexedDB is unavailable")
-      );
-      return;
-    }
-
-    const request = indexedDB.open(DB_NAME, 1);
-
-    request.onupgradeneeded = () => {
-      const db = request.result;
-
-      if (!db.objectStoreNames.contains(DB_STORE)) {
-        db.createObjectStore(
-          DB_STORE,
-          { keyPath: "id" }
-        );
-      }
-    };
-
-    request.onsuccess = () => {
-      resolve(request.result);
-    };
-
-    request.onerror = () => {
-      reject(request.error);
-    };
-  });
-}
-
-async function savePhoto(id, record) {
-  const db = await openPhotoDB();
-
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(
-      DB_STORE,
-      "readwrite"
-    );
-
-    transaction.objectStore(DB_STORE).put({
-      id,
-      record
-    });
-
-    transaction.oncomplete = () => {
-      db.close();
-      resolve();
-    };
-
-    transaction.onerror = () => {
-      db.close();
-      reject(transaction.error);
-    };
-  });
-}
-
-async function restorePhotos() {
-  try {
-    const db = await openPhotoDB();
-
-    const rows = await new Promise(
-      (resolve, reject) => {
-        const transaction = db.transaction(
-          DB_STORE,
-          "readonly"
-        );
-
-        const request = transaction
-          .objectStore(DB_STORE)
-          .getAll();
-
-        request.onsuccess = () => {
-          resolve(request.result);
-        };
-
-        request.onerror = () => {
-          reject(request.error);
-        };
-      }
-    );
-
-    db.close();
-
-    for (const row of rows) {
-      if (row.id === "selfie") {
-        state.selfie = row.record;
-        continue;
-      }
-
-      if (row.id === "ecc") {
-        state.ecc.photo = row.record;
-        continue;
-      }
-
-      if (row.id === "sfa") {
-        state.sfa.photo = row.record;
-        continue;
-      }
-
-      const [sectionId, shot] =
-        row.id.split(":");
-
-      if (
-        state.sections[sectionId] &&
-        shot === "overview"
-      ) {
-        state.sections[sectionId].overview =
-          row.record;
-      }
-    }
-
-  } catch (error) {
-    console.warn("Photo restore failed:", error);
-  }
-}
-
-async function clearPhotos() {
-  const db = await openPhotoDB();
-
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(
-      DB_STORE,
-      "readwrite"
-    );
-
-    transaction.objectStore(DB_STORE).clear();
-
-    transaction.oncomplete = () => {
-      db.close();
-      resolve();
-    };
-
-    transaction.onerror = () => {
-      db.close();
-      reject(transaction.error);
-    };
-  });
-}
-
-/* =====================================================
-   7. OFFICER AND PREMISE SELECTION
-===================================================== */
-
-function updateClock() {
-  if (!state.officer) return;
-
-  auditDateTime.value = singaporeDateTime();
-}
-
-function updateAssignmentDisplay() {
-  assignmentDetails.hidden = !state.officer;
+function showAssignment() {
+  $("assignmentDetails").hidden =
+    !state.officer;
 
   if (!state.officer) return;
 
-  const assignment = ASSIGNMENTS[state.officer];
+  $("amPremiseName").textContent =
+    ASSIGNMENTS[state.officer].am;
 
-  amPremiseName.textContent = assignment.am;
-  pmPremiseName.textContent = assignment.pm;
+  $("pmPremiseName").textContent =
+    ASSIGNMENTS[state.officer].pm;
 
   document.querySelectorAll(
     'input[name="premiseChoice"]'
   ).forEach(radio => {
     radio.checked =
-      radio.value === state.premiseChoice;
+      radio.value === state.choice;
   });
 
-  otherPremiseGroup.hidden =
-    state.premiseChoice !== "other";
+  $("otherPremiseGroup").hidden =
+    state.choice !== "other";
 
-  otherPremiseInput.value =
-    state.otherPremise;
+  $("otherPremiseInput").value =
+    state.other;
 
   updateClock();
 }
 
-officerSelect.addEventListener(
+function updateClock() {
+  if (!state.officer) return;
+
+  $("auditDateTime").value =
+    new Intl.DateTimeFormat(
+      "en-SG",
+      {
+        timeZone: "Asia/Singapore",
+        dateStyle: "full",
+        timeStyle: "medium"
+      }
+    ).format(new Date());
+}
+
+$("officerSelect").addEventListener(
   "change",
   () => {
-    const previous = state.officer;
+    const next =
+      $("officerSelect").value;
 
-    state.officer = officerSelect.value;
-
-    if (previous !== state.officer) {
-      state.premiseChoice =
-        singaporeHour() < 12 ? "am" : "pm";
-
-      state.otherPremise = "";
-    }
+    const evidenceExists = Boolean(
+      state.selfie ||
+      state.eccPhoto ||
+      state.sfaPhoto ||
+      Object.values(state.photos).some(Boolean)
+    );
 
     if (
-      state.officer &&
-      !state.auditStartedAt
+      next !== state.officer &&
+      evidenceExists
     ) {
-      state.auditStartedAt =
+      if (!confirm(
+        "Changing officer may mix evidence between audits. " +
+        "Reset the current audit and select a new officer?"
+      )) {
+        $("officerSelect").value =
+          state.officer;
+        return;
+      }
+
+      resetAudit(false).then(() => {
+        state.officer = next;
+
+        state.choice =
+          singaporeHour() < 12
+            ? "am"
+            : "pm";
+
+        state.startedAt =
+          new Date().toISOString();
+
+        $("officerSelect").value = next;
+
+        showAssignment();
+        saveForm();
+        updateCompletion();
+      }).catch(err => {
+        alert(`Unable to reset audit: ${err.message}`);
+        $("officerSelect").value = state.officer;
+      });
+
+      return;
+    }
+
+    state.officer = next;
+
+    state.choice = next
+      ? (
+        singaporeHour() < 12
+          ? "am"
+          : "pm"
+      )
+      : "";
+
+    if (
+      next &&
+      !state.startedAt
+    ) {
+      state.startedAt =
         new Date().toISOString();
     }
 
-    updateAssignmentDisplay();
-    saveDraft();
+    showAssignment();
+    saveForm();
     updateCompletion();
   }
 );
@@ -656,111 +444,58 @@ officerSelect.addEventListener(
 document.querySelectorAll(
   'input[name="premiseChoice"]'
 ).forEach(radio => {
-  radio.addEventListener("change", () => {
-    state.premiseChoice = radio.value;
+  radio.addEventListener(
+    "change",
+    () => {
+      state.choice = radio.value;
 
-    otherPremiseGroup.hidden =
-      radio.value !== "other";
+      $("otherPremiseGroup").hidden =
+        radio.value !== "other";
 
-    saveDraft();
-    updateCompletion();
-  });
+      saveForm();
+      updateCompletion();
+    }
+  );
 });
 
-otherPremiseInput.addEventListener(
+$("otherPremiseInput").addEventListener(
   "input",
   () => {
-    state.otherPremise =
-      otherPremiseInput.value;
+    state.other =
+      $("otherPremiseInput").value;
 
-    saveDraft();
+    saveForm();
     updateCompletion();
   }
 );
 
-/* =====================================================
-   8. DEVICE INFORMATION
-===================================================== */
+// =====================================================
+// 5. GPS LOCATION
+// =====================================================
 
-function detectDevice() {
-  const userAgent =
-    navigator.userAgent || "Unknown";
-
-  const platform =
-    navigator.userAgentData?.platform ||
-    navigator.platform ||
-    "Unknown";
-
-  const mobile =
-    navigator.userAgentData?.mobile ??
-    /Android|iPhone|iPad|Mobile/i.test(
-      userAgent
-    );
-
-  state.device = {
-    platform,
-    mobile,
-    userAgent,
-
-    screen:
-      `${window.screen.width}x` +
-      `${window.screen.height}`,
-
-    pixelRatio:
-      window.devicePixelRatio || 1
-  };
-
-  deviceStatus.textContent =
-    `${platform}${mobile ? " · mobile" : ""}`;
-}
-
-/* =====================================================
-   9. GPS LOCATION
-===================================================== */
-
-function validLocation(location) {
-  return Boolean(
-    location &&
-    Number.isFinite(location.latitude) &&
-    Number.isFinite(location.longitude) &&
-    Number.isFinite(location.accuracyM) &&
-    location.accuracyM <= MAX_GPS_ACCURACY_M &&
-    location.capturedAt
-  );
-}
-
-function locationIsFresh(location) {
-  if (!validLocation(location)) return false;
-
-  const age =
-    Date.now() -
-    new Date(location.capturedAt).getTime();
-
-  return (
-    Number.isFinite(age) &&
-    age >= 0 &&
-    age <= MAX_GPS_AGE_MS
-  );
-}
-
-function positionRecord(position) {
+function positionRecord(pos) {
   return {
-    latitude: position.coords.latitude,
-    longitude: position.coords.longitude,
+    latitude: pos.coords.latitude,
+    longitude: pos.coords.longitude,
 
-    accuracyM:
-      Math.round(position.coords.accuracy),
-
-    altitude: position.coords.altitude,
-    heading: position.coords.heading,
-    speed: position.coords.speed,
+    accuracyM: Math.round(
+      pos.coords.accuracy
+    ),
 
     capturedAt:
-      new Date(position.timestamp).toISOString()
+      new Date(pos.timestamp).toISOString()
   };
 }
 
-function getFreshLocation() {
+function validGPS(loc) {
+  return Boolean(
+    loc &&
+    Number.isFinite(loc.latitude) &&
+    Number.isFinite(loc.longitude)
+  );
+}
+
+function getGPS() {
   return new Promise(resolve => {
     if (!navigator.geolocation) {
       resolve(null);
@@ -768,13 +503,11 @@ function getFreshLocation() {
     }
 
     navigator.geolocation.getCurrentPosition(
-      position => {
-        resolve(positionRecord(position));
-      },
+      pos => resolve(
+        positionRecord(pos)
+      ),
 
-      () => {
-        resolve(null);
-      },
+      () => resolve(null),
 
       {
         enableHighAccuracy: true,
@@ -785,150 +518,136 @@ function getFreshLocation() {
   });
 }
 
-function updateLocationDisplay() {
-  if (validLocation(state.location)) {
-    const fresh =
-      locationIsFresh(state.location);
+function badge(id, label, kind) {
+  $(id).textContent = label;
+  $(id).className = `badge ${kind}`;
+}
 
-    setBadge(
-      locationStatus,
-      fresh
-        ? "Location ready"
-        : "Location needs refresh",
-      fresh ? "good" : "warn"
-    );
-
-    locationDetails.textContent =
-      `Accuracy: ±${state.location.accuracyM} m · ` +
-      `Captured: ${new Date(
-        state.location.capturedAt
-      ).toLocaleString("en-SG", {
-        timeZone: "Asia/Singapore"
-      })}`;
-
-  } else {
-    setBadge(
-      locationStatus,
+function showGPS() {
+  if (!validGPS(state.location)) {
+    badge(
+      "locationStatus",
       "Not captured",
       "bad"
     );
 
-    locationDetails.textContent =
-      "GPS location is mandatory before proceeding.";
+    $("locationDetails").textContent =
+      "GPS is required before live capture.";
+
+  } else {
+    badge(
+      "locationStatus",
+      "Location captured",
+      "good"
+    );
+
+    const loc = state.location;
+
+    $("locationDetails").textContent =
+      `Accuracy: ±${loc.accuracyM} m; captured ` +
+      new Date(loc.capturedAt).toLocaleString(
+        "en-SG",
+        {
+          timeZone: "Asia/Singapore"
+        }
+      );
   }
 }
 
-locationBtn.addEventListener(
+$("locationBtn").addEventListener(
   "click",
   async () => {
     if (!state.officer) {
-      alert("Select the audit officer first.");
+      alert("Select an officer first.");
       return;
     }
 
-    locationBtn.disabled = true;
+    $("locationBtn").disabled = true;
 
-    setBadge(
-      locationStatus,
+    badge(
+      "locationStatus",
       "Locating…",
       "warn"
     );
 
-    const location =
-      await getFreshLocation();
+    const loc = await getGPS();
 
-    locationBtn.disabled = false;
+    $("locationBtn").disabled = false;
 
-    if (!validLocation(location)) {
-      updateLocationDisplay();
+    if (!validGPS(loc)) {
+      showGPS();
 
-      locationDetails.textContent =
-        "Unable to obtain an accurate GPS fix. " +
-        "Enable location permission and try again.";
+      $("locationDetails").textContent =
+        "Could not obtain GPS. Check browser " +
+        "permission and try again.";
 
       return;
     }
 
-    state.location = location;
+    state.location = loc;
 
     if (!state.initialLocation) {
       state.initialLocation = {
-        ...location
+        ...loc
       };
     }
 
-    updateLocationDisplay();
-    saveDraft();
+    showGPS();
+    saveForm();
     updateCompletion();
   }
 );
 
-/* =====================================================
-   10. COLLAPSIBLE CARDS
-===================================================== */
+// =====================================================
+// 6. COLLAPSIBLE CARDS
+// =====================================================
 
-function toggleCard(card, button) {
-  const collapsed =
-    card.classList.toggle("collapsed");
+function collapse(cardId, buttonId) {
+  $(cardId).classList.add("collapsed");
 
-  button.setAttribute(
-    "aria-expanded",
-    String(!collapsed)
-  );
-}
-
-function collapseCard(card, button) {
-  card.classList.add("collapsed");
-
-  button.setAttribute(
+  $(buttonId).setAttribute(
     "aria-expanded",
     "false"
   );
 }
 
-setupToggleBtn.addEventListener(
-  "click",
-  () => toggleCard(
-    setupCard,
-    setupToggleBtn
-  )
-);
+for (const [cardId, buttonId] of [
+  ["setupCard", "setupToggleBtn"],
+  ["selfieCard", "selfieToggleBtn"],
+  ["verificationCard", "verificationToggleBtn"]
+]) {
+  $(buttonId).addEventListener(
+    "click",
+    () => {
+      const collapsed =
+        $(cardId).classList.toggle(
+          "collapsed"
+        );
 
-selfieToggleBtn.addEventListener(
-  "click",
-  () => toggleCard(
-    selfieCard,
-    selfieToggleBtn
-  )
-);
+      $(buttonId).setAttribute(
+        "aria-expanded",
+        String(!collapsed)
+      );
+    }
+  );
+}
 
-verificationToggleBtn.addEventListener(
-  "click",
-  () => toggleCard(
-    verificationCard,
-    verificationToggleBtn
-  )
-);
-
-/* =====================================================
-   11. CAMERA FUNCTIONS
-===================================================== */
+// =====================================================
+// 7. CAMERA FUNCTIONS
+// =====================================================
 
 function stopStream(stream) {
-  if (!stream) return;
-
-  stream.getTracks().forEach(
+  stream?.getTracks().forEach(
     track => track.stop()
   );
 }
 
-async function startCamera(
-  videoElement,
-  facingMode
-) {
-  if (!navigator.mediaDevices?.getUserMedia) {
+async function startCamera(video, facing) {
+  if (
+    !navigator.mediaDevices?.getUserMedia
+  ) {
     throw new Error(
-      "Camera unavailable. Use HTTPS and allow camera access."
+      "Camera requires HTTPS and browser permission."
     );
   }
 
@@ -936,7 +655,7 @@ async function startCamera(
     await navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: {
-          ideal: facingMode
+          ideal: facing
         },
 
         width: {
@@ -951,37 +670,56 @@ async function startCamera(
       audio: false
     });
 
-  videoElement.srcObject = stream;
+  // Reject a known front-camera selection
+  // for document and audit capture.
+  const actual = stream
+    .getVideoTracks()[0]
+    ?.getSettings()
+    ?.facingMode;
 
-  await videoElement.play();
+  if (
+    facing === "environment" &&
+    actual === "user"
+  ) {
+    stopStream(stream);
+
+    throw new Error(
+      "Rear camera not available; front camera " +
+      "cannot be used for documents or audits."
+    );
+  }
+
+  video.srcObject = stream;
+
+  try {
+    await video.play();
+
+  } catch (e) {
+    stopStream(stream);
+    throw e;
+  }
 
   return stream;
 }
 
-function captureFrame(
-  videoElement,
-  canvas
-) {
+function snap(video, canvas) {
   if (
-    !videoElement.videoWidth ||
-    !videoElement.videoHeight
+    !video.videoWidth ||
+    !video.videoHeight
   ) {
     throw new Error(
-      "Camera is not ready."
+      "Camera not ready."
     );
   }
 
   canvas.width =
-    videoElement.videoWidth;
+    video.videoWidth;
 
   canvas.height =
-    videoElement.videoHeight;
+    video.videoHeight;
 
-  const context =
-    canvas.getContext("2d");
-
-  context.drawImage(
-    videoElement,
+  canvas.getContext("2d").drawImage(
+    video,
     0,
     0,
     canvas.width,
@@ -991,107 +729,100 @@ function captureFrame(
   return {
     canvas,
 
-    dataUrl:
+    imageDataUrl:
       canvas.toDataURL(
         "image/jpeg",
-        0.85
+        0.87
       )
   };
 }
 
-/* =====================================================
-   12. IMAGE QUALITY CHECKS
-===================================================== */
+// =====================================================
+// 8. IMAGE QUALITY VALIDATION
+// =====================================================
 
-/*
-  These are basic brightness, contrast and
-  sharpness checks.
-
-  They do not confirm that a photograph shows
-  the correct object.
-
-  For example, rejecting a chair photographed
-  instead of a toilet bowl requires a trained
-  image-classification or vision model.
-*/
-
-function assessImageQuality(canvas) {
-  const sample =
+function checkQuality(canvas) {
+  const c =
     document.createElement("canvas");
 
-  sample.width = 200;
-  sample.height = 150;
+  c.width = 320;
+  c.height = 240;
 
-  const context =
-    sample.getContext("2d");
+  const ctx = c.getContext(
+    "2d",
+    {
+      willReadFrequently: true
+    }
+  );
 
-  context.drawImage(
+  ctx.drawImage(
     canvas,
     0,
     0,
-    200,
-    150
+    c.width,
+    c.height
   );
 
-  const imageData =
-    context.getImageData(
-      0,
-      0,
-      200,
-      150
-    ).data;
+  const pix = ctx.getImageData(
+    0,
+    0,
+    c.width,
+    c.height
+  ).data;
 
   const gray =
-    new Float32Array(200 * 150);
+    new Float32Array(
+      c.width * c.height
+    );
 
   let sum = 0;
-  let sumSq = 0;
+  let sq = 0;
 
   for (
     let i = 0, p = 0;
-    i < imageData.length;
+    i < pix.length;
     i += 4, p++
   ) {
-    const brightness =
-      0.299 * imageData[i] +
-      0.587 * imageData[i + 1] +
-      0.114 * imageData[i + 2];
+    const g =
+      .299 * pix[i] +
+      .587 * pix[i + 1] +
+      .114 * pix[i + 2];
 
-    gray[p] = brightness;
+    gray[p] = g;
 
-    sum += brightness;
-    sumSq += brightness * brightness;
+    sum += g;
+    sq += g * g;
   }
 
   const mean =
     sum / gray.length;
 
   const variance =
-    sumSq / gray.length -
+    sq / gray.length -
     mean * mean;
 
-  let edgeTotal = 0;
+  let edge = 0;
   let count = 0;
 
   for (
     let y = 1;
-    y < 149;
+    y < 239;
     y += 2
   ) {
     for (
       let x = 1;
-      x < 199;
+      x < 319;
       x += 2
     ) {
-      const index =
-        y * 200 + x;
+      const i =
+        y * 320 + x;
 
-      edgeTotal += Math.abs(
-        4 * gray[index] -
-        gray[index - 1] -
-        gray[index + 1] -
-        gray[index - 200] -
-        gray[index + 200]
+      edge += Math.abs(
+        4 * gray[i] -
+        gray[i - 1] -
+        gray[i + 1] -
+        gray[i - 320] -
+        gray[i + 320]
       );
 
       count++;
@@ -1099,91 +830,102 @@ function assessImageQuality(canvas) {
   }
 
   const sharpness =
-    edgeTotal / Math.max(count, 1);
+    edge / Math.max(1, count);
 
   if (mean < 35) {
     return {
       accept: false,
-      reason: "Image is too dark"
+      reason: "Too dark"
     };
   }
 
   if (mean > 235) {
     return {
       accept: false,
-      reason: "Image is overexposed"
+      reason: "Overexposed"
     };
   }
 
   if (variance < 180) {
     return {
       accept: false,
-      reason: "Image contrast is too low"
+      reason: "Low contrast or obstructed lens"
     };
   }
 
-  if (sharpness < 7) {
+  if (sharpness < 6) {
     return {
       accept: false,
       reason:
-        "Image appears blurry. " +
-        "Hold the phone steady and retake."
+        "Image appears blurry; hold steady and retake"
     };
   }
 
   return {
     accept: true,
-    reason: "Basic image quality checks passed",
-    brightness: mean,
-    contrast: variance,
-    sharpness
+    brightness: Math.round(mean),
+    sharpness:
+      Number(sharpness.toFixed(1))
   };
 }
 
-/* =====================================================
-   13. CAPTURE METADATA
-===================================================== */
+// =====================================================
+// 9. CAPTURE METADATA
+// =====================================================
 
-function createCaptureRecord(
+function record(
   imageDataUrl,
-  section,
+  category,
   quality
 ) {
   return {
-    section,
-
+    category,
     imageDataUrl,
 
     capturedAt:
       new Date().toISOString(),
 
     officer: state.officer,
-    officerName: getOfficerName(),
-
-    premise: getPremise(),
+    premise: premiseName(),
 
     location:
-      state.location
-        ? { ...state.location }
-        : null,
-
-    device:
-      { ...state.device },
+      { ...state.location },
 
     quality
   };
 }
 
-/* =====================================================
-   14. SECTION 2 - OFFICER SELFIE
-===================================================== */
+function imageIn(el, rec) {
+  $(el).replaceChildren();
 
-startSelfieBtn.addEventListener(
+  if (!rec) return;
+
+  const img =
+    document.createElement("img");
+
+  img.src = rec.imageDataUrl;
+  img.alt = "Captured photograph";
+
+  $(el).appendChild(img);
+}
+
+const setupReady = () =>
+  Boolean(
+    state.officer &&
+    premiseName() &&
+    validGPS(state.location)
+  );
+
+// =====================================================
+// 10. OFFICER SELFIE
+// =====================================================
+
+$("startSelfieBtn").addEventListener(
   "click",
   async () => {
-    if (!isSetupComplete()) {
+    if (!setupReady()) {
       alert(
-        "Complete the officer, premise and GPS first."
+        "Complete officer, premise and GPS first."
       );
       return;
     }
@@ -1193,335 +935,216 @@ startSelfieBtn.addEventListener(
     try {
       state.selfieStream =
         await startCamera(
-          camera,
+          $("camera"),
           "user"
         );
 
-      captureSelfieBtn.disabled = false;
+      $("captureSelfieBtn").disabled =
+        false;
 
-    } catch (error) {
+    } catch (e) {
       alert(
-        `Front camera unavailable: ${error.message}`
+        `Front camera unavailable: ${e.message}`
       );
     }
   }
 );
 
-captureSelfieBtn.addEventListener(
+$("captureSelfieBtn").addEventListener(
   "click",
   async () => {
-    if (!isSetupComplete()) {
-      alert(
-        "Complete audit details and GPS first."
-      );
-      return;
-    }
-
     try {
-      const captured =
-        captureFrame(
-          camera,
-          captureCanvas
-        );
-
-      const quality =
-        assessImageQuality(
-          captured.canvas
-        );
-
-      if (!quality.accept) {
+      if (!setupReady()) {
         alert(
-          `Retake selfie: ${quality.reason}`
+          "Complete audit details first."
         );
         return;
       }
 
-      const record =
-        createCaptureRecord(
-          captured.dataUrl,
-          "selfie",
-          quality
-        );
-
-      await savePhoto(
-        "selfie",
-        record
+      const pic = snap(
+        $("camera"),
+        $("captureCanvas")
       );
 
-      state.selfie = record;
+      const q =
+        checkQuality(pic.canvas);
 
-      selfiePreview.innerHTML =
-        `<img src="${record.imageDataUrl}" ` +
-        `alt="Officer selfie">`;
+      if (!q.accept) {
+        alert(
+          `Retake selfie: ${q.reason}`
+        );
+        return;
+      }
 
-      selfieStatus.textContent =
-        "Completed";
+      const rec = record(
+        pic.imageDataUrl,
+        "selfie",
+        q
+      );
 
-      startSelfieBtn.textContent =
-        "Retake Selfie";
+      await putPhoto(
+        "selfie",
+        rec
+      );
+
+      state.selfie = rec;
+
+      imageIn(
+        "selfiePreview",
+        rec
+      );
+
+      $("startSelfieBtn").textContent =
+        "Retake selfie";
 
       stopStream(state.selfieStream);
 
       state.selfieStream = null;
-      camera.srcObject = null;
+      $("camera").srcObject = null;
 
-      captureSelfieBtn.disabled = true;
+      $("captureSelfieBtn").disabled =
+        true;
 
-      collapseCard(
-        selfieCard,
-        selfieToggleBtn
+      collapse(
+        "selfieCard",
+        "selfieToggleBtn"
       );
 
       updateCompletion();
 
-    } catch (error) {
+    } catch (e) {
       alert(
-        `Selfie capture failed: ${error.message}`
+        `Could not save selfie: ${e.message}`
       );
     }
   }
 );
 
-/* =====================================================
-   15. SECTION 3 - ECC AND SFA OCR
-===================================================== */
+// =====================================================
+// 11. ECC DATE VALIDATION
+// =====================================================
 
-function renderDocumentPreview(
-  element,
-  record,
-  emptyText
-) {
-  element.innerHTML = "";
-
-  if (!record) {
-    element.textContent = emptyText;
-    return;
-  }
-
-  const image =
-    document.createElement("img");
-
-  image.src = record.imageDataUrl;
-  image.alt = "Captured document";
-
-  element.appendChild(image);
-}
-
-/*
-  OCR uses Tesseract.js loaded in index.html.
-
-  OCR is run only when the officer clicks
-  the relevant OCR button.
-
-  Extracted fields remain editable because
-  OCR may misread names, dates or numbers.
-*/
-
-async function runOCR(
-  record,
-  statusElement
-) {
-  if (!record) {
-    throw new Error(
-      "Capture the document first."
-    );
-  }
-
+const validDate = s => {
   if (
-    !window.Tesseract ||
-    !window.Tesseract.recognize
+    !/^\d{4}-\d{2}-\d{2}$/.test(s)
   ) {
-    throw new Error(
-      "OCR library unavailable. Check internet connection."
-    );
+    return false;
   }
 
-  statusElement.textContent =
-    "Reading document. Please wait…";
+  const [y, m, d] =
+    s.split("-").map(Number);
 
-  const result =
-    await Tesseract.recognize(
-      record.imageDataUrl,
-      "eng",
-      {
-        logger: message => {
-          if (
-            message.status ===
-            "recognizing text"
-          ) {
-            const progress =
-              Math.round(
-                (message.progress || 0) * 100
-              );
-
-            statusElement.textContent =
-              `Reading document: ${progress}%`;
-          }
-        }
-      }
+  const t =
+    new Date(
+      Date.UTC(y, m - 1, d)
     );
 
-  return result.data.text || "";
-}
+  return (
+    t.getUTCFullYear() === y &&
+    t.getUTCMonth() === m - 1 &&
+    t.getUTCDate() === d
+  );
+};
 
-/* =====================================================
-   16. OCR DATE EXTRACTION
-===================================================== */
+function parseDate(text) {
+  if (!text) return "";
 
-function normalizeOCRDate(text) {
-  const value = safeText(text);
-
-  if (!value) return "";
-
-  // DD/MM/YYYY or DD-MM-YYYY
-  let match = value.match(
-    /\b(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})\b/
+  // YYYY-MM-DD
+  let m = text.match(
+    /\b(\d{4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})\b/
   );
 
-  if (match) {
-    const day =
-      match[1].padStart(2, "0");
+  if (m) {
+    const s =
+      `${m[1]}-` +
+      `${m[2].padStart(2, "0")}-` +
+      `${m[3].padStart(2, "0")}`;
 
-    const month =
-      match[2].padStart(2, "0");
-
-    const year = match[3];
-
-    const result =
-      `${year}-${month}-${day}`;
-
-    return isValidDateString(result)
-      ? result
-      : "";
+    if (validDate(s)) return s;
   }
 
-  // YYYY/MM/DD or YYYY-MM-DD
-  match = value.match(
-    /\b(\d{4})[\/.-](\d{1,2})[\/.-](\d{1,2})\b/
+  // DD/MM/YYYY
+  m = text.match(
+    /\b(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})\b/
   );
 
-  if (match) {
-    const result =
-      `${match[1]}-` +
-      `${match[2].padStart(2, "0")}-` +
-      `${match[3].padStart(2, "0")}`;
+  if (m) {
+    const s =
+      `${m[3]}-` +
+      `${m[2].padStart(2, "0")}-` +
+      `${m[1].padStart(2, "0")}`;
 
-    return isValidDateString(result)
-      ? result
-      : "";
+    if (validDate(s)) return s;
   }
 
   // 12 January 2027
-  match = value.match(
-    /\b(\d{1,2})\s+` +
-    `(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|` +
-    `Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|` +
-    `Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|` +
-    `Nov(?:ember)?|Dec(?:ember)?)` +
-    `\s+(\d{4})\b/i
+  m = text.match(
+    /\b(\d{1,2})\s+(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(\d{4})\b/i
   );
 
-  if (match) {
-    const months = {
-      jan: 1,
-      feb: 2,
-      mar: 3,
-      apr: 4,
-      may: 5,
-      jun: 6,
-      jul: 7,
-      aug: 8,
-      sep: 9,
-      oct: 10,
-      nov: 11,
-      dec: 12
-    };
+  if (m) {
+    const months = [
+      "jan",
+      "feb",
+      "mar",
+      "apr",
+      "may",
+      "jun",
+      "jul",
+      "aug",
+      "sep",
+      "oct",
+      "nov",
+      "dec"
+    ];
 
-    const monthNumber =
-      months[match[2].slice(0, 3).toLowerCase()];
+    const month =
+      months.indexOf(
+        m[2].slice(0, 3).toLowerCase()
+      ) + 1;
 
-    const result =
-      `${match[3]}-` +
-      `${String(monthNumber).padStart(2, "0")}-` +
-      `${match[1].padStart(2, "0")}`;
+    const s =
+      `${m[3]}-` +
+      `${String(month).padStart(2, "0")}-` +
+      `${m[1].padStart(2, "0")}`;
 
-    return isValidDateString(result)
-      ? result
-      : "";
+    if (validDate(s)) return s;
   }
 
   return "";
 }
 
-function extractExpiryDate(text) {
-  const lines = text
-    .split(/\r?\n/)
-    .map(line => line.trim())
-    .filter(Boolean);
+// =====================================================
+// 12. ECC OCR FIELD EXTRACTION
+// =====================================================
 
-  const keywords =
-    /expir|valid until|valid to|valid thru|valid through/i;
-
-  for (let i = 0; i < lines.length; i++) {
-    if (!keywords.test(lines[i])) continue;
-
-    const current =
-      normalizeOCRDate(lines[i]);
-
-    if (current) return current;
-
-    if (i + 1 < lines.length) {
-      const next =
-        normalizeOCRDate(lines[i + 1]);
-
-      if (next) return next;
-    }
-  }
-
-  // Do not guess that an unrelated date
-  // is an expiry date.
-  return "";
-}
-
-function extractFieldAfterLabel(
-  text,
-  labelPattern
-) {
-  const lines = text
-    .split(/\r?\n/)
-    .map(line => line.trim())
-    .filter(Boolean);
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-
-    if (!labelPattern.test(line)) {
-      continue;
-    }
-
-    const colonIndex =
-      line.indexOf(":");
-
-    if (colonIndex >= 0) {
-      const value =
-        line.slice(colonIndex + 1).trim();
-
-      if (value) return value;
-    }
-
+function fieldAfterLabel(lines, regex) {
+  for (
+    let i = 0;
+    i < lines.length;
+    i++
+  ) {
     const match =
-      line.match(labelPattern);
+      lines[i].match(regex);
 
-    if (match) {
-      const value =
-        line.slice(
+    if (!match) continue;
+
+    const sameLine =
+      lines[i]
+        .slice(
           match.index + match[0].length
-        ).replace(/^[:\s-]+/, "").trim();
+        )
+        .replace(
+          /^[\s:;#-]+/,
+          ""
+        )
+        .trim();
 
-      if (value) return value;
+    if (sameLine) {
+      return sameLine;
     }
 
-    if (i + 1 < lines.length) {
+    if (lines[i + 1]) {
       return lines[i + 1];
     }
   }
@@ -1529,344 +1152,294 @@ function extractFieldAfterLabel(
   return "";
 }
 
-/* =====================================================
-   17. ECC VERIFICATION
-===================================================== */
+function extractEcc(text) {
+  const lines = text
+    .split(/\r?\n/)
+    .map(v => v.trim())
+    .filter(Boolean);
 
-captureEccBtn.addEventListener(
-  "click",
-  () => {
-    openCaptureDialog({
-      type: "document",
-      documentType: "ecc",
-      title: "Capture ECC Card",
-      hint:
-        "Use the rear camera. Ensure the " +
-        "name and expiry date are readable."
-    });
-  }
-);
+  const name =
+    fieldAfterLabel(
+      lines,
+      /(?:Full\s*)?Name\b\s*:?/i
+    );
 
-runEccOcrBtn.addEventListener(
-  "click",
-  async () => {
-    if (!state.ecc.photo) return;
+  const number =
+    fieldAfterLabel(
+      lines,
+      /(?:ECC|ECO|Registration|Certificate|Cert\.?|ID)\s*(?:No\.?|Number|#|ID)?\s*:?/i
+    );
 
-    runEccOcrBtn.disabled = true;
+  let expiry = "";
 
-    try {
-      const text =
-        await runOCR(
-          state.ecc.photo,
-          eccOcrStatus
-        );
-
-      state.ecc.ocrText = text;
-      state.ecc.ocrCompleted = true;
-
-      const name =
-        extractFieldAfterLabel(
-          text,
-          /(?:ECC\s*)?Name/i
-        );
-
-      const expiry =
-        extractExpiryDate(text);
-
-      if (name) {
-        state.ecc.name = name;
-        eccName.value = name;
-      }
-
-      if (expiry) {
-        state.ecc.expiry = expiry;
-        eccExpiry.value = expiry;
-      }
-
-      eccOcrStatus.textContent =
-        "OCR completed. Review and correct " +
-        "the extracted fields if necessary.";
-
-      saveDraft();
-      updateEccValidity();
-      updateCompletion();
-
-    } catch (error) {
-      eccOcrStatus.textContent =
-        `OCR failed: ${error.message}`;
-
-    } finally {
-      runEccOcrBtn.disabled = false;
+  for (
+    let i = 0;
+    i < lines.length;
+    i++
+  ) {
+    if (
+      !/(?:expir(?:y|es|ation)?|valid\s*(?:until|to|thru|through)|expiry\s*date)/i
+        .test(lines[i])
+    ) {
+      continue;
     }
+
+    expiry =
+      parseDate(lines[i]) ||
+      parseDate(
+        lines[i + 1] || ""
+      );
+
+    if (expiry) break;
   }
-);
 
-eccName.addEventListener(
-  "input",
-  () => {
-    state.ecc.name = eccName.value;
+  return {
+    name,
+    number,
+    expiry
+  };
+}
 
-    saveDraft();
-    updateCompletion();
-  }
-);
+// =====================================================
+// 13. ECC VALIDITY STATUS
+// =====================================================
 
-eccExpiry.addEventListener(
-  "change",
-  () => {
-    state.ecc.expiry = eccExpiry.value;
-
-    saveDraft();
-    updateEccValidity();
-    updateCompletion();
-  }
-);
-
-function updateEccValidity() {
-  const expiry = state.ecc.expiry;
-
-  if (!isValidDateString(expiry)) {
-    setBadge(
-      eccValidityStatus,
-      "Not verified",
+function eccDateStatus() {
+  if (!state.eccPhoto) {
+    badge(
+      "eccValidityStatus",
+      "Not checked",
       "bad"
     );
 
-    eccValidityDetails.textContent =
-      "Enter and review the ECC expiry date.";
+    $("eccValidityDetails").textContent =
+      "Capture the ECC card to assess the date.";
 
     return;
   }
 
-  const today = singaporeDateString();
+  if (!validDate(state.eccExpiry)) {
+    badge(
+      "eccValidityStatus",
+      "Review required",
+      "warn"
+    );
 
-  if (expiry < today) {
-    setBadge(
-      eccValidityStatus,
+    $("eccValidityDetails").textContent =
+      "Expiry date not reliably extracted. " +
+      "Check the card and correct the field if necessary.";
+
+    return;
+  }
+
+  if (
+    state.eccExpiry < todaySG()
+  ) {
+    badge(
+      "eccValidityStatus",
       "Expired",
       "bad"
     );
 
-    eccValidityDetails.textContent =
-      `Expiry date ${expiry} is before today.`;
+    $("eccValidityDetails").textContent =
+      `Expiry date ${state.eccExpiry} has passed.`;
 
-  } else {
-    setBadge(
-      eccValidityStatus,
-      "Date current",
-      "good"
-    );
+    return;
+  }
 
-    eccValidityDetails.textContent =
-      `Expiry date ${expiry} is current. ` +
-      "This is a preliminary date check, " +
-      "not official ECC credential verification.";
+  badge(
+    "eccValidityStatus",
+    "Valid (date check)",
+    "good"
+  );
+
+  $("eccValidityDetails").textContent =
+    `Expiry date ${state.eccExpiry} has not passed. ` +
+    "OCR and date comparison do not verify official ECC registration.";
+}
+
+// =====================================================
+// 14. AUTOMATIC ECC OCR
+// =====================================================
+
+async function autoEccOCR() {
+  if (!state.eccPhoto) return;
+
+  $("eccOcrStatus").textContent =
+    "Automatically reading ECC card…";
+
+  if (!window.Tesseract?.recognize) {
+    $("eccOcrStatus").textContent =
+      "OCR library unavailable (internet required). " +
+      "Check card fields manually.";
+
+    return;
+  }
+
+  try {
+    const out =
+      await Tesseract.recognize(
+        state.eccPhoto.imageDataUrl,
+        "eng",
+        {
+          logger: msg => {
+            if (
+              msg.status ===
+              "recognizing text"
+            ) {
+              $("eccOcrStatus").textContent =
+                "Automatic ECC OCR: " +
+                `${Math.round(msg.progress * 100)}%`;
+            }
+          }
+        }
+      );
+
+    state.eccOcrText =
+      out.data.text || "";
+
+    const found =
+      extractEcc(
+        state.eccOcrText
+      );
+
+    state.eccName = found.name;
+    state.eccNumber = found.number;
+    state.eccExpiry = found.expiry;
+
+    state.eccOcrDone = true;
+
+    $("eccName").value =
+      state.eccName;
+
+    $("eccNumber").value =
+      state.eccNumber;
+
+    $("eccExpiry").value =
+      state.eccExpiry;
+
+    const missing = [
+      !found.name && "name",
+      !found.number && "ECC number",
+      !found.expiry && "expiry date"
+    ].filter(Boolean);
+
+    $("eccOcrStatus").textContent =
+      missing.length
+        ? (
+          "OCR completed. Check or correct: " +
+          missing.join(", ") +
+          "."
+        )
+        : (
+          "OCR completed automatically. " +
+          "Please confirm the details against the card."
+        );
+
+    eccDateStatus();
+    saveForm();
+    updateCompletion();
+
+  } catch (err) {
+    $("eccOcrStatus").textContent =
+      `OCR failed: ${err.message}. ` +
+      "Check the extracted fields manually.";
+
+    eccDateStatus();
+    updateCompletion();
   }
 }
 
-/* =====================================================
-   18. SFA LICENCE VERIFICATION
-===================================================== */
+// Keep manual correction available when OCR is uncertain.
 
-captureSfaBtn.addEventListener(
-  "click",
-  () => {
-    openCaptureDialog({
-      type: "document",
-      documentType: "sfa",
-      title: "Capture SFA Licence",
-      hint:
-        "Use the rear camera. Ensure the " +
-        "licence number and premise details " +
-        "are readable."
-    });
-  }
-);
+for (
+  const [id, prop] of [
+    ["eccName", "eccName"],
+    ["eccNumber", "eccNumber"],
+    ["eccExpiry", "eccExpiry"]
+  ]
+) {
+  $(id).addEventListener(
+    "input",
+    () => {
+      state[prop] = $(id).value;
 
-runSfaOcrBtn.addEventListener(
-  "click",
-  async () => {
-    if (!state.sfa.photo) return;
-
-    runSfaOcrBtn.disabled = true;
-
-    try {
-      const text =
-        await runOCR(
-          state.sfa.photo,
-          sfaOcrStatus
-        );
-
-      state.sfa.ocrText = text;
-      state.sfa.ocrCompleted = true;
-
-      const licenceNumber =
-        extractFieldAfterLabel(
-          text,
-          /(?:Licence|License)\s*(?:No\.?|Number|#)/i
-        );
-
-      const premiseName =
-        extractFieldAfterLabel(
-          text,
-          /(?:Premise|Business|Establishment)\s*Name/i
-        );
-
-      const expiry =
-        extractExpiryDate(text);
-
-      if (licenceNumber) {
-        state.sfa.licenceNumber =
-          licenceNumber;
-
-        sfaLicenceNumber.value =
-          licenceNumber;
-      }
-
-      if (premiseName) {
-        state.sfa.premiseName =
-          premiseName;
-
-        sfaPremiseName.value =
-          premiseName;
-      }
-
-      if (expiry) {
-        state.sfa.expiry = expiry;
-        sfaExpiry.value = expiry;
-      }
-
-      sfaOcrStatus.textContent =
-        "OCR completed. Review the extracted " +
-        "licence details.";
-
-      saveDraft();
-      updateSfaValidity();
+      eccDateStatus();
+      saveForm();
       updateCompletion();
-
-    } catch (error) {
-      sfaOcrStatus.textContent =
-        `OCR failed: ${error.message}`;
-
-    } finally {
-      runSfaOcrBtn.disabled = false;
     }
-  }
-);
-
-sfaLicenceNumber.addEventListener(
-  "input",
-  () => {
-    state.sfa.licenceNumber =
-      sfaLicenceNumber.value;
-
-    saveDraft();
-    updateCompletion();
-  }
-);
-
-sfaPremiseName.addEventListener(
-  "input",
-  () => {
-    state.sfa.premiseName =
-      sfaPremiseName.value;
-
-    saveDraft();
-    updateCompletion();
-  }
-);
-
-sfaExpiry.addEventListener(
-  "change",
-  () => {
-    state.sfa.expiry =
-      sfaExpiry.value;
-
-    saveDraft();
-    updateSfaValidity();
-    updateCompletion();
-  }
-);
-
-function updateSfaValidity() {
-  const expiry = state.sfa.expiry;
-
-  if (!expiry) {
-    setBadge(
-      sfaValidityStatus,
-      "Verification required",
-      "warn"
-    );
-
-    sfaValidityDetails.textContent =
-      "No expiry date entered. Some SFA " +
-      "licences require verification through " +
-      "their digital licence or official records.";
-
-    return;
-  }
-
-  if (!isValidDateString(expiry)) {
-    setBadge(
-      sfaValidityStatus,
-      "Invalid date",
-      "bad"
-    );
-
-    sfaValidityDetails.textContent =
-      "Review the entered expiry date.";
-
-    return;
-  }
-
-  const today = singaporeDateString();
-
-  if (expiry < today) {
-    setBadge(
-      sfaValidityStatus,
-      "Expired date",
-      "bad"
-    );
-
-    sfaValidityDetails.textContent =
-      "The entered expiry date has passed.";
-
-  } else {
-    setBadge(
-      sfaValidityStatus,
-      "Date current",
-      "good"
-    );
-
-    sfaValidityDetails.textContent =
-      "The entered date is current. " +
-      "Official SFA licence status has " +
-      "not been independently verified.";
-  }
+  );
 }
 
-/* =====================================================
-   19. SECTION 4 - AUDIT PHOTO UI
-===================================================== */
+// =====================================================
+// 15. DOCUMENT CAPTURE BUTTONS
+// =====================================================
 
-function renderSections() {
-  sectionsContainer.innerHTML = "";
+$("captureEccBtn").addEventListener(
+  "click",
+  () => openRear({
+    type: "ecc",
+    title: "Capture ECC card",
+    help:
+      "Keep the name, ECC number and expiry date in focus."
+  })
+);
 
-  for (const section of SECTION_CONFIG) {
-    const fragment =
-      sectionTemplate.content.cloneNode(true);
+$("captureSfaBtn").addEventListener(
+  "click",
+  () => openRear({
+    type: "sfa",
+    title: "Capture SFA licence",
+    help:
+      "Capture the entire SFA licence clearly. " +
+      "No OCR is required."
+  })
+);
+
+// =====================================================
+// 16. AUDIT AREA UI
+// =====================================================
+
+function renderAreas() {
+  const container =
+    $("sectionsContainer");
+
+  container.replaceChildren();
+
+  for (const area of AREAS) {
+    const frag =
+      $("sectionTemplate")
+        .content
+        .cloneNode(true);
 
     const article =
-      fragment.querySelector(".audit-section");
+      frag.querySelector(
+        ".audit-section"
+      );
 
-    article.dataset.section = section.id;
+    article.dataset.section =
+      area.id;
 
-    article.querySelector("h3").textContent =
-      section.name;
+    article.querySelector(
+      "h3"
+    ).textContent = area.name;
 
     article.querySelector(
       ".section-help"
-    ).textContent = section.help;
+    ).textContent = area.help;
+
+    article.querySelector(
+      ".capture-shot-btn"
+    ).addEventListener(
+      "click",
+      () => openRear({
+        type: "area",
+        id: area.id,
+        title: area.name,
+        help: area.help,
+        guide: area.guide
+      })
+    );
 
     const toggle =
       article.querySelector(
@@ -1875,95 +1448,89 @@ function renderSections() {
 
     toggle.addEventListener(
       "click",
-      () => toggleCard(
-        article,
-        toggle
-      )
-    );
-
-    const captureButton =
-      article.querySelector(
-        ".capture-shot-btn"
-      );
-
-    captureButton.addEventListener(
-      "click",
       () => {
-        openCaptureDialog({
-          type: "audit",
-          sectionId: section.id,
-          title: section.name,
-          hint: section.help,
-          onionSkin: section.onionSkin
-        });
+        const collapsed =
+          article.classList.toggle(
+            "collapsed"
+          );
+
+        toggle.setAttribute(
+          "aria-expanded",
+          String(!collapsed)
+        );
       }
     );
 
-    sectionsContainer.appendChild(fragment);
+    container.appendChild(frag);
   }
 }
 
-function refreshSectionUI(
-  sectionId,
+function showArea(
+  id,
   autoCollapse = true
 ) {
   const article =
     document.querySelector(
-      `.audit-section[data-section="${sectionId}"]`
+      `.audit-section[data-section="${id}"]`
     );
 
   if (!article) return;
 
-  const record =
-    state.sections[sectionId].overview;
+  const rec =
+    state.photos[id];
 
   const preview =
-    article.querySelector(".mini-preview");
-
-  const button =
     article.querySelector(
-      ".capture-shot-btn"
+      ".mini-preview"
     );
 
-  if (record) {
-    preview.innerHTML =
-      `<img src="${record.imageDataUrl}" ` +
-      `alt="Audit photograph">`;
+  preview.replaceChildren();
 
-    button.textContent =
-      "Retake Photograph";
+  if (rec) {
+    const img =
+      document.createElement("img");
+
+    img.src = rec.imageDataUrl;
+    img.alt = `${id} photograph`;
+
+    preview.appendChild(img);
+  }
+
+  article.querySelector(
+    ".section-progress"
+  ).textContent =
+    rec ? "1/1" : "0/1";
+
+  article.querySelector(
+    ".capture-shot-btn"
+  ).textContent =
+    rec
+      ? "Retake photograph"
+      : "Take photograph";
+
+  if (
+    rec &&
+    autoCollapse
+  ) {
+    article.classList.add(
+      "collapsed"
+    );
 
     article.querySelector(
-      ".section-progress"
-    ).textContent = "1/1";
-
-    if (autoCollapse) {
-      collapseCard(
-        article,
-        article.querySelector(
-          ".section-toggle-btn"
-        )
-      );
-    }
-
-  } else {
-    preview.innerHTML = "";
-
-    button.textContent =
-      "Take Photograph";
-
-    article.querySelector(
-      ".section-progress"
-    ).textContent = "0/1";
+      ".section-toggle-btn"
+    ).setAttribute(
+      "aria-expanded",
+      "false"
+    );
   }
 }
 
-/* =====================================================
-   20. SHARED REAR CAMERA DIALOG
-===================================================== */
+// =====================================================
+// 17. SHARED REAR-CAMERA DIALOG
+// =====================================================
 
-async function openCaptureDialog(config) {
-  if (!isSetupComplete()) {
+async function openRear(config) {
+  if (!setupReady()) {
     alert(
       "Complete officer, premise and GPS first."
     );
@@ -1972,503 +1539,442 @@ async function openCaptureDialog(config) {
 
   if (!state.selfie) {
     alert(
-      "Complete the officer selfie first."
+      "Take your officer selfie first."
     );
     return;
   }
 
-  state.activeCapture = config;
+  if (state.active) return;
 
-  dialogTitle.textContent =
+  state.active = config;
+
+  $("dialogTitle").textContent =
     config.title;
 
-  dialogHint.textContent =
-    config.hint || "";
+  $("dialogHint").textContent =
+    config.help;
 
-  qualityMessage.textContent =
-    "Align the camera and hold the phone steady.";
+  $("qualityMessage").textContent =
+    "Hold steady and capture a clear image.";
 
-  qualityMessage.className =
+  $("qualityMessage").className =
     "quality-message";
 
-  if (
-    config.type === "audit" &&
-    config.onionSkin
-  ) {
-    auditOnionSkin.hidden = false;
-    auditOnionSkin.src =
-      config.onionSkin;
+  $("auditOnionSkin").hidden =
+    !config.guide;
+
+  if (config.guide) {
+    $("auditOnionSkin").src =
+      config.guide;
 
   } else {
-    auditOnionSkin.hidden = true;
-    auditOnionSkin.removeAttribute("src");
+    $("auditOnionSkin").removeAttribute(
+      "src"
+    );
   }
 
-  captureDialog.showModal();
+  $("captureDialog").showModal();
 
   try {
-    state.auditStream =
+    state.rearStream =
       await startCamera(
-        auditCamera,
+        $("auditCamera"),
         "environment"
       );
 
-  } catch (error) {
+  } catch (err) {
     alert(
-      `Rear camera unavailable: ${error.message}`
+      `Rear camera unavailable: ${err.message}`
     );
 
-    closeCaptureDialog();
+    closeRear();
   }
 }
 
-function closeCaptureDialog() {
-  stopStream(state.auditStream);
+function closeRear() {
+  stopStream(state.rearStream);
 
-  state.auditStream = null;
-  auditCamera.srcObject = null;
+  state.rearStream = null;
 
-  state.activeCapture = null;
+  $("auditCamera").srcObject =
+    null;
 
-  if (captureDialog.open) {
-    captureDialog.close();
+  state.active = null;
+
+  if ($("captureDialog").open) {
+    $("captureDialog").close();
   }
 }
 
-closeDialogBtn.addEventListener(
+$("closeDialogBtn").addEventListener(
   "click",
-  closeCaptureDialog
+  closeRear
 );
 
-captureDialog.addEventListener(
+$("captureDialog").addEventListener(
   "cancel",
-  event => {
-    event.preventDefault();
-    closeCaptureDialog();
+  e => {
+    e.preventDefault();
+    closeRear();
   }
 );
 
-/* =====================================================
-   21. SHARED PHOTO CAPTURE
-===================================================== */
+// =====================================================
+// 18. CAPTURE PHOTO
+// =====================================================
 
-captureAuditBtn.addEventListener(
+$("captureAuditBtn").addEventListener(
   "click",
   async () => {
-    const config =
-      state.activeCapture;
+    const active =
+      state.active;
 
-    if (!config) return;
+    if (!active) return;
 
-    captureAuditBtn.disabled = true;
+    $("captureAuditBtn").disabled =
+      true;
 
     try {
-      const location =
-        await getFreshLocation();
+      // Mandatory fresh GPS for each photo.
+      const fresh =
+        await getGPS();
 
-      if (!validLocation(location)) {
-        qualityMessage.textContent =
-          "Capture rejected. Fresh GPS " +
-          "location is unavailable or inaccurate.";
-
-        qualityMessage.className =
-          "quality-message warn";
-
-        return;
-      }
-
-      state.location = location;
-
-      updateLocationDisplay();
-      saveDraft();
-
-      const captured =
-        captureFrame(
-          auditCamera,
-          auditCanvas
-        );
-
-      const quality =
-        assessImageQuality(
-          captured.canvas
-        );
-
-      if (!quality.accept) {
-        qualityMessage.textContent =
-          `Capture rejected: ${quality.reason}`;
-
-        qualityMessage.className =
-          "quality-message warn";
-
-        return;
-      }
-
-      if (config.type === "document") {
-        const type =
-          config.documentType;
-
-        const record =
-          createCaptureRecord(
-            captured.dataUrl,
-            type,
-            quality
-          );
-
-        await savePhoto(
-          type,
-          record
-        );
-
-        if (type === "ecc") {
-          state.ecc.photo = record;
-          state.ecc.ocrCompleted = false;
-          state.ecc.ocrText = "";
-          state.ecc.name = "";
-          state.ecc.expiry = "";
-
-          eccName.value = "";
-          eccExpiry.value = "";
-
-          eccOcrStatus.textContent =
-            "ECC card captured. Run OCR.";
-
-          renderDocumentPreview(
-            eccPreview,
-            record,
-            "No ECC card captured"
-          );
-
-          runEccOcrBtn.disabled = false;
-          updateEccValidity();
-        }
-
-        if (type === "sfa") {
-          state.sfa.photo = record;
-          state.sfa.ocrCompleted = false;
-          state.sfa.ocrText = "";
-          state.sfa.licenceNumber = "";
-          state.sfa.premiseName = "";
-          state.sfa.expiry = "";
-
-          sfaLicenceNumber.value = "";
-          sfaPremiseName.value = "";
-          sfaExpiry.value = "";
-
-          sfaOcrStatus.textContent =
-            "SFA licence captured. Run OCR.";
-
-          renderDocumentPreview(
-            sfaPreview,
-            record,
-            "No SFA licence captured"
-          );
-
-          runSfaOcrBtn.disabled = false;
-          updateSfaValidity();
-        }
-
-        saveDraft();
-
-      } else if (config.type === "audit") {
-        const sectionId =
-          config.sectionId;
-
-        const record =
-          createCaptureRecord(
-            captured.dataUrl,
-            sectionId,
-            quality
-          );
-
-        await savePhoto(
-          `${sectionId}:overview`,
-          record
-        );
-
-        state.sections[
-          sectionId
-        ].overview = record;
-
-        refreshSectionUI(
-          sectionId,
-          true
+      if (!validGPS(fresh)) {
+        throw new Error(
+          "Fresh GPS location required; please retry."
         );
       }
 
-      closeCaptureDialog();
+      const pic = snap(
+        $("auditCamera"),
+        $("auditCanvas")
+      );
+
+      const q =
+        checkQuality(
+          pic.canvas
+        );
+
+      if (!q.accept) {
+        throw new Error(
+          `${q.reason}. Please retake.`
+        );
+      }
+
+      state.location = fresh;
+
+      showGPS();
+      saveForm();
+
+      const rec = record(
+        pic.imageDataUrl,
+
+        active.type === "area"
+          ? active.id
+          : active.type,
+
+        q
+      );
+
+      if (active.type === "ecc") {
+
+        await putPhoto(
+          "ecc",
+          rec
+        );
+
+        state.eccPhoto = rec;
+
+        // Clear values from previous ECC card.
+        state.eccName = "";
+        state.eccNumber = "";
+        state.eccExpiry = "";
+
+        state.eccOcrText = "";
+        state.eccOcrDone = false;
+
+        $("eccName").value = "";
+        $("eccNumber").value = "";
+        $("eccExpiry").value = "";
+
+        imageIn(
+          "eccPreview",
+          rec
+        );
+
+        eccDateStatus();
+        saveForm();
+
+      } else if (
+        active.type === "sfa"
+      ) {
+
+        await putPhoto(
+          "sfa",
+          rec
+        );
+
+        state.sfaPhoto = rec;
+
+        imageIn(
+          "sfaPreview",
+          rec
+        );
+
+        $("sfaStatus").textContent =
+          "SFA licence photo captured (no OCR).";
+
+      } else {
+
+        await putPhoto(
+          `area:${active.id}`,
+          rec
+        );
+
+        state.photos[active.id] =
+          rec;
+
+        showArea(active.id);
+      }
+
+      closeRear();
       updateCompletion();
 
-    } catch (error) {
-      qualityMessage.textContent =
-        `Capture failed: ${error.message}`;
+      // ECC OCR starts automatically
+      // after successfully capturing the card.
+      if (active.type === "ecc") {
+        await autoEccOCR();
+      }
 
-      qualityMessage.className =
+    } catch (err) {
+
+      $("qualityMessage").textContent =
+        `Photo not accepted: ${err.message}`;
+
+      $("qualityMessage").className =
         "quality-message warn";
 
     } finally {
-      captureAuditBtn.disabled = false;
+      $("captureAuditBtn").disabled =
+        false;
     }
   }
 );
 
-/* =====================================================
-   22. COMPLETION CHECKS
-===================================================== */
-
-function isSetupComplete() {
-  return Boolean(
-    state.officer &&
-    getPremise() &&
-    validLocation(state.location)
-  );
-}
-
-function isEccComplete() {
-  return Boolean(
-    state.ecc.photo &&
-    safeText(state.ecc.name) &&
-    isValidDateString(state.ecc.expiry) &&
-    state.ecc.expiry >= singaporeDateString()
-  );
-}
-
-function isSfaComplete() {
-  /*
-    SFA expiry may not appear on every
-    licence format.
-
-    For this mock-up, the required fields
-    are the captured image, licence number
-    and premise name.
-
-    An official licence status check is
-    outside the scope of this static site.
-  */
-
-  return Boolean(
-    state.sfa.photo &&
-    safeText(state.sfa.licenceNumber) &&
-    safeText(state.sfa.premiseName) &&
-    (
-      !state.sfa.expiry ||
-      (
-        isValidDateString(state.sfa.expiry) &&
-        state.sfa.expiry >= singaporeDateString()
-      )
-    )
-  );
-}
-
-function isVerificationComplete() {
-  return (
-    isEccComplete() &&
-    isSfaComplete()
-  );
-}
+// =====================================================
+// 19. COMPLETION VALIDATION
+// =====================================================
 
 function updateCompletion() {
-  const setupComplete =
-    isSetupComplete();
+  const ready =
+    setupReady();
 
-  setupStatus.textContent =
-    setupComplete
+  $("setupStatus").textContent =
+    ready
       ? "Completed"
       : "Not completed";
 
   if (
-    setupComplete &&
+    ready &&
     !state.setupWasComplete
   ) {
-    collapseCard(
-      setupCard,
-      setupToggleBtn
+    collapse(
+      "setupCard",
+      "setupToggleBtn"
     );
   }
 
   state.setupWasComplete =
-    setupComplete;
+    ready;
 
-  selfieStatus.textContent =
+  $("selfieStatus").textContent =
     state.selfie
       ? "Completed"
       : "Not completed";
 
-  const verificationComplete =
-    isVerificationComplete();
+  const eccComplete = Boolean(
+    state.eccPhoto &&
+    state.eccName.trim() &&
+    state.eccNumber.trim() &&
+    validDate(state.eccExpiry) &&
+    state.eccExpiry >= todaySG()
+  );
 
-  verificationStatus.textContent =
-    verificationComplete
+  const docsComplete =
+    eccComplete &&
+    Boolean(state.sfaPhoto);
+
+  $("verificationStatus").textContent =
+    docsComplete
       ? "Completed"
       : "Not completed";
 
   if (
-    verificationComplete &&
+    docsComplete &&
     !state.verificationWasComplete
   ) {
-    collapseCard(
-      verificationCard,
-      verificationToggleBtn
+    collapse(
+      "verificationCard",
+      "verificationToggleBtn"
     );
   }
 
   state.verificationWasComplete =
-    verificationComplete;
+    docsComplete;
 
-  let photoCount = 0;
-
-  for (const section of SECTION_CONFIG) {
-    if (
-      state.sections[
-        section.id
-      ].overview
-    ) {
-      photoCount++;
-    }
-  }
+  const count =
+    Object.values(
+      state.photos
+    ).filter(Boolean).length;
 
   const missing = [];
 
   if (!state.officer) {
-    missing.push("audit officer");
+    missing.push("officer");
   }
 
-  if (!getPremise()) {
+  if (!premiseName()) {
     missing.push("premise");
   }
 
-  if (!validLocation(state.location)) {
-    missing.push("GPS location");
+  if (!validGPS(state.location)) {
+    missing.push("GPS");
   }
 
   if (!state.selfie) {
-    missing.push("officer selfie");
+    missing.push("selfie");
   }
 
-  if (!isEccComplete()) {
-    missing.push("ECC verification");
-  }
-
-  if (!isSfaComplete()) {
-    missing.push("SFA licence details");
-  }
-
-  if (
-    photoCount <
-    SECTION_CONFIG.length
-  ) {
+  if (!eccComplete) {
     missing.push(
-      `${SECTION_CONFIG.length - photoCount} ` +
-      "audit photographs"
+      "ECC details and current expiry date"
     );
   }
 
-  if (missing.length > 0) {
-    completionSummary.textContent =
-      "Not ready for export.\n\n" +
-      "Missing:\n" +
-      missing.map(
-        item => `• ${item}`
-      ).join("\n");
-
-    downloadBtn.disabled = true;
-
-  } else {
-    completionSummary.textContent =
-      "Audit package ready.\n\n" +
-      `Officer: ${getOfficerName()}\n` +
-      `Premise: ${getPremise()}\n` +
-      `ECC: Date current\n` +
-      `SFA: Details captured; official verification pending\n` +
-      `Audit photographs: ${photoCount}/6\n` +
-      `GPS: Captured`;
-
-    downloadBtn.disabled = false;
+  if (!state.sfaPhoto) {
+    missing.push(
+      "SFA licence photo"
+    );
   }
+
+  if (count !== AREAS.length) {
+    missing.push(
+      `${AREAS.length - count} audit photo(s)`
+    );
+  }
+
+  $("downloadBtn").disabled =
+    missing.length > 0;
+
+  $("completionSummary").textContent =
+    missing.length
+      ? (
+        `Not ready. Missing: ${missing.join(", ")}.\n` +
+        `Audit areas captured: ${count}/6.`
+      )
+      : (
+        "Ready to export.\n" +
+        `Officer: ${officerName()}\n` +
+        `Premise: ${premiseName()}\n` +
+        "ECC: Valid (date check only)\n" +
+        "SFA photo: Captured\n" +
+        "Audit photos: 6/6"
+      );
 }
 
-/* =====================================================
-   23. JSON EXPORT
-===================================================== */
+// =====================================================
+// 20. JSON EXPORT
+// =====================================================
 
-downloadBtn.addEventListener(
+$("downloadBtn").addEventListener(
   "click",
   () => {
     updateCompletion();
 
-    if (downloadBtn.disabled) return;
+    if ($("downloadBtn").disabled) {
+      return;
+    }
 
-    const auditId =
-      crypto.randomUUID?.() ||
-      `audit-${Date.now()}`;
+    const data = {
+      schemaVersion: "4.0",
 
-    const auditPackage = {
-      schemaVersion: "3.0",
-      auditId,
+      id:
+        crypto.randomUUID?.() ||
+        `audit-${Date.now()}`,
 
       exportedAt:
         new Date().toISOString(),
 
       officer: {
         id: state.officer,
-        name: getOfficerName()
+        name: officerName()
       },
 
       premise: {
-        name: getPremise(),
-        selection: state.premiseChoice,
-        source: "Mock assignment"
+        name: premiseName(),
+        selection: state.choice,
+        assignmentSource:
+          "Hardcoded mock-up"
       },
 
-      auditStartedAt:
-        state.auditStartedAt,
-
-      device:
-        state.device,
+      startedAt: state.startedAt,
 
       initialLocation:
         state.initialLocation,
 
-      latestLocation:
+      currentLocation:
         state.location,
 
       selfie:
         state.selfie,
 
       ecc: {
-        ...state.ecc
+        card: state.eccPhoto,
+        name: state.eccName,
+        number: state.eccNumber,
+        expiry: state.eccExpiry,
+        ocrText: state.eccOcrText,
+        ocrCompleted: state.eccOcrDone,
+
+        dateCheck:
+          state.eccExpiry >= todaySG()
+            ? "date-current"
+            : "expired-or-unknown"
       },
 
       sfa: {
-        ...state.sfa
+        licencePhoto:
+          state.sfaPhoto,
+
+        officialStatus:
+          "not checked"
       },
 
-      auditSections:
-        state.sections,
+      areas:
+        state.photos,
 
       limitations: [
-        "This is a static GitHub Pages mock-up.",
-        "GPS and device timestamps are not tamper-proof.",
-        "OCR results require officer review.",
-        "ECC validity is a preliminary expiry-date check.",
-        "SFA validity is not verified against official records.",
-        "Image quality checks do not verify image content.",
-        "No automatic TCI scoring is performed.",
-        "No central database is connected."
+        "Mock-up only",
+        "GPS/device time may be spoofed",
+        "ECC OCR and date check do not verify official registration",
+        "SFA licence is photographic evidence only",
+        "Image sharpness check is heuristic"
       ]
     };
 
-    const blob = new Blob(
-      [
-        JSON.stringify(
-          auditPackage,
-          null,
-          2
-        )
-      ],
-      {
-        type: "application/json"
-      }
-    );
+    const blob =
+      new Blob(
+        [
+          JSON.stringify(
+            data,
+            null,
+            2
+          )
+        ],
+        {
+          type: "application/json"
+        }
+      );
 
     const url =
       URL.createObjectURL(blob);
@@ -2479,10 +1985,16 @@ downloadBtn.addEventListener(
     link.href = url;
 
     link.download =
-      `${sanitizeFilename(getPremise())}` +
-      `-ESR-Audit.json`;
+      premiseName()
+        .replace(
+          /[^a-z0-9_-]+/gi,
+          "-"
+        )
+        .slice(0, 70) +
+      "-ESR.json";
 
     document.body.appendChild(link);
+
     link.click();
     link.remove();
 
@@ -2493,209 +2005,276 @@ downloadBtn.addEventListener(
   }
 );
 
-/* =====================================================
-   24. RESET ENTIRE AUDIT
-===================================================== */
+// =====================================================
+// 21. RESET AUDIT
+// =====================================================
 
-async function resetEntireAudit() {
-  const confirmed = confirm(
-    "Reset this audit?\n\n" +
-    "This will permanently clear all locally " +
-    "saved form information, GPS records, " +
-    "selfie, ECC card, SFA licence and audit " +
-    "photographs from this mock-up.\n\n" +
-    "Previously downloaded audit packages " +
-    "will not be deleted."
-  );
-
-  if (!confirmed) return;
-
-  resetBtn.disabled = true;
-  headerResetBtn.disabled = true;
-
+async function resetAudit(reload = true) {
   stopStream(state.selfieStream);
-  stopStream(state.auditStream);
+  stopStream(state.rearStream);
 
-  try {
-    await clearPhotos();
+  await clearPhotos();
 
-    localStorage.removeItem(
-      STORAGE_KEY
-    );
+  localStorage.removeItem(
+    FORM_KEY
+  );
 
-    window.location.reload();
-
-  } catch (error) {
-    alert(
-      "Unable to clear all saved data. " +
-      "Please check browser storage settings.\n\n" +
-      error.message
-    );
-
-    resetBtn.disabled = false;
-    headerResetBtn.disabled = false;
+  if (reload) {
+    location.reload();
+    return;
   }
-}
 
-resetBtn.addEventListener(
-  "click",
-  resetEntireAudit
-);
+  Object.assign(state, {
+    officer: "",
+    choice: "",
+    other: "",
+    startedAt: null,
 
-headerResetBtn.addEventListener(
-  "click",
-  resetEntireAudit
-);
+    location: null,
+    initialLocation: null,
 
-/* =====================================================
-   25. RESTORE VERIFICATION UI
-===================================================== */
+    selfie: null,
+    eccPhoto: null,
+    sfaPhoto: null,
 
-function restoreVerificationUI() {
-  eccName.value =
-    state.ecc.name;
+    eccName: "",
+    eccNumber: "",
+    eccExpiry: "",
+    eccOcrText: "",
+    eccOcrDone: false,
 
-  eccExpiry.value =
-    state.ecc.expiry;
+    photos: Object.fromEntries(
+      AREAS.map(
+        a => [a.id, null]
+      )
+    ),
 
-  sfaLicenceNumber.value =
-    state.sfa.licenceNumber;
+    selfieStream: null,
+    rearStream: null,
+    active: null,
 
-  sfaPremiseName.value =
-    state.sfa.premiseName;
+    setupWasComplete: false,
+    verificationWasComplete: false
+  });
 
-  sfaExpiry.value =
-    state.sfa.expiry;
+  $("selfiePreview").replaceChildren();
 
-  renderDocumentPreview(
-    eccPreview,
-    state.ecc.photo,
-    "No ECC card captured"
+  imageIn(
+    "eccPreview",
+    null
   );
 
-  renderDocumentPreview(
-    sfaPreview,
-    state.sfa.photo,
-    "No SFA licence captured"
+  imageIn(
+    "sfaPreview",
+    null
   );
 
-  runEccOcrBtn.disabled =
-    !state.ecc.photo;
+  $("eccPreview").textContent =
+    "No ECC card captured";
 
-  runSfaOcrBtn.disabled =
-    !state.sfa.photo;
+  $("sfaPreview").textContent =
+    "No SFA licence captured";
 
-  eccOcrStatus.textContent =
-    state.ecc.ocrCompleted
-      ? "OCR previously completed. Review the fields."
-      : state.ecc.photo
-        ? "ECC card captured. Run OCR."
-        : "Awaiting ECC card capture.";
+  for (const area of AREAS) {
+    showArea(
+      area.id,
+      false
+    );
+  }
 
-  sfaOcrStatus.textContent =
-    state.sfa.ocrCompleted
-      ? "OCR previously completed. Review the fields."
-      : state.sfa.photo
-        ? "SFA licence captured. Run OCR."
-        : "Awaiting SFA licence capture.";
+  $("eccName").value = "";
+  $("eccNumber").value = "";
+  $("eccExpiry").value = "";
 
-  updateEccValidity();
-  updateSfaValidity();
+  $("sfaStatus").textContent =
+    "Awaiting SFA licence photograph.";
+
+  $("eccOcrStatus").textContent =
+    "Capture the ECC card to start automatic OCR.";
+
+  eccDateStatus();
 }
 
-/* =====================================================
-   26. INITIALISATION
-===================================================== */
+$("headerResetBtn").addEventListener(
+  "click",
+  async () => {
+    if (!confirm(
+      "Reset this audit and permanently clear the locally saved " +
+      "form, selfie and all photographs?"
+    )) {
+      return;
+    }
+
+    $("headerResetBtn").disabled =
+      true;
+
+    try {
+      await resetAudit();
+
+    } catch (err) {
+      alert(
+        `Reset failed: ${err.message}`
+      );
+
+      $("headerResetBtn").disabled =
+        false;
+    }
+  }
+);
+
+// =====================================================
+// 22. INITIALISATION AND DRAFT RECOVERY
+// =====================================================
 
 async function init() {
-  renderSections();
-  detectDevice();
+  renderAreas();
 
-  restoreDraft();
-  await restorePhotos();
+  $("deviceStatus").textContent =
+    `${navigator.platform || "Device"}` +
+    (
+      /Android|iPhone|iPad|Mobile/i.test(
+        navigator.userAgent
+      )
+        ? " · mobile"
+        : ""
+    );
 
-  officerSelect.value =
+  restoreForm();
+
+  // Restore images before allowing an officer
+  // change that could mix evidence.
+  try {
+    state.selfie =
+      await getPhoto("selfie") ||
+      null;
+
+    state.eccPhoto =
+      await getPhoto("ecc") ||
+      null;
+
+    state.sfaPhoto =
+      await getPhoto("sfa") ||
+      null;
+
+    for (const area of AREAS) {
+      state.photos[area.id] =
+        await getPhoto(
+          `area:${area.id}`
+        ) || null;
+    }
+
+  } catch (err) {
+    console.warn(
+      "Photo recovery unavailable:",
+      err
+    );
+
+    $("draftStatus").textContent =
+      "Photo recovery unavailable";
+  }
+
+  $("officerSelect").value =
     state.officer;
 
   if (
     state.officer &&
-    !state.premiseChoice
+    !state.choice
   ) {
-    state.premiseChoice =
+    state.choice =
       singaporeHour() < 12
         ? "am"
         : "pm";
   }
 
-  updateAssignmentDisplay();
-  updateLocationDisplay();
+  showAssignment();
+  showGPS();
+
+  imageIn(
+    "selfiePreview",
+    state.selfie
+  );
+
+  imageIn(
+    "eccPreview",
+    state.eccPhoto
+  );
+
+  imageIn(
+    "sfaPreview",
+    state.sfaPhoto
+  );
+
+  if (!state.eccPhoto) {
+    $("eccPreview").textContent =
+      "No ECC card captured";
+  }
+
+  if (!state.sfaPhoto) {
+    $("sfaPreview").textContent =
+      "No SFA licence captured";
+  }
+
+  $("eccName").value =
+    state.eccName;
+
+  $("eccNumber").value =
+    state.eccNumber;
+
+  $("eccExpiry").value =
+    state.eccExpiry;
+
+  $("sfaStatus").textContent =
+    state.sfaPhoto
+      ? "SFA licence photo captured (no OCR)."
+      : "Awaiting SFA licence photograph.";
+
+  $("eccOcrStatus").textContent =
+    state.eccOcrDone
+      ? "ECC OCR completed. Review the extracted fields."
+      : (
+        state.eccPhoto
+          ? "Card recovered; OCR will run automatically on retake."
+          : "Capture the ECC card to start automatic OCR."
+      );
 
   if (state.selfie) {
-    selfieStatus.textContent =
-      "Completed";
+    $("startSelfieBtn").textContent =
+      "Retake selfie";
 
-    startSelfieBtn.textContent =
-      "Retake Selfie";
-
-    selfiePreview.innerHTML =
-      `<img src="${state.selfie.imageDataUrl}" ` +
-      `alt="Officer selfie">`;
-
-    collapseCard(
-      selfieCard,
-      selfieToggleBtn
+    collapse(
+      "selfieCard",
+      "selfieToggleBtn"
     );
   }
 
-  restoreVerificationUI();
-
-  for (const section of SECTION_CONFIG) {
-    refreshSectionUI(
-      section.id,
-      true
-    );
+  for (const area of AREAS) {
+    showArea(area.id);
   }
 
+  eccDateStatus();
   updateCompletion();
 
-  saveDraft();
+  if (!window.isSecureContext) {
+    $("locationDetails").textContent =
+      "Camera and GPS require HTTPS.";
+  }
 
-  // Refresh clock every 30 seconds.
-  // Do not override a manually chosen premise.
-  setInterval(
-    updateClock,
-    30000
-  );
-
-  // Refresh expiry-date assessments
-  // when the page remains open overnight.
+  // Keep date/time current without changing
+  // a manually selected AM/PM premise.
   setInterval(
     () => {
-      updateEccValidity();
-      updateSfaValidity();
+      updateClock();
+      eccDateStatus();
       updateCompletion();
     },
-    60000
+    30000
   );
-
-  if (!window.isSecureContext) {
-    locationDetails.textContent =
-      "Camera and GPS require a secure HTTPS connection.";
-  }
 }
 
-init().catch(error => {
-  console.error(
-    "ESR initialisation failed:",
-    error
-  );
+init().catch(err => {
+  console.error(err);
 
   alert(
-    "The ESR application could not initialise. " +
-    "Please reload the page."
+    `ESR could not initialise: ${err.message}`
   );
 });
-
-/* =====================================================
-   END OF APP.JS
-===================================================== */
