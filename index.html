@@ -3,955 +3,489 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
-  >
-
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#ffffff">
-
   <title>ESR Audit Capture</title>
 
-  <link
-    rel="stylesheet"
-    href="styles.css?v=20261123-3"
-  >
+  <link rel="stylesheet" href="styles.css?v=20261123-4">
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"
+    defer
+  ></script>
+
+  <script src="app.js?v=20261123-4" defer></script>
 </head>
 
 <body>
+  <main class="app-shell">
 
-<main class="app-shell">
+    <!-- HEADER AND RESET -->
+    <header class="app-header">
+      <div class="header-row">
+        <div>
+          <h1>ESR Audit Capture</h1>
+          <p>Environmental Sanitation Regime · Mock-up</p>
+        </div>
 
-  <!-- ========================================
-       HEADER AND PERMANENT RESET
-  ========================================= -->
-
-  <header class="app-header">
-
-    <div class="header-row">
-
-      <div class="header-text">
-        <h1>ESR Audit Capture</h1>
-
-        <p>
-          Environmental Sanitation Regime
-          Inspection
-        </p>
+        <button
+          id="headerResetBtn"
+          class="header-reset-btn"
+          type="button"
+          title="Reset entire audit"
+          aria-label="Reset entire audit"
+        >×</button>
       </div>
 
-      <button
-        id="headerResetBtn"
-        class="header-reset-btn"
-        type="button"
-        aria-label="Reset entire audit"
-        title="Reset audit"
-      >
-        <span aria-hidden="true">×</span>
-      </button>
+      <p id="draftStatus" class="draft-status" aria-live="polite">
+        New audit
+      </p>
+    </header>
 
-    </div>
+    <!-- SECTION 1: AUDIT DETAILS -->
+    <section class="card" id="setupCard">
+      <div class="collapsible-heading">
+        <div>
+          <h2>1. Audit details</h2>
+          <span id="setupStatus" class="section-progress">
+            Not completed
+          </span>
+        </div>
 
-    <p class="hint">
-      Live camera capture with mandatory location.
-    </p>
-
-    <p
-      id="draftStatus"
-      class="draft-status"
-      aria-live="polite"
-    >
-      New audit
-    </p>
-
-  </header>
-
-
-  <!-- ========================================
-       SECTION 1: AUDIT DETAILS
-  ========================================= -->
-
-  <section
-    class="card collapsible-card"
-    id="setupCard"
-  >
-
-    <div class="collapsible-heading">
-
-      <div>
-        <h2>1. Audit details</h2>
-
-        <span
-          id="setupStatus"
-          class="section-progress"
-        >
-          Not completed
-        </span>
+        <button
+          id="setupToggleBtn"
+          class="collapse-btn"
+          type="button"
+          aria-expanded="true"
+          aria-label="Expand or collapse audit details"
+        >▼</button>
       </div>
 
-      <button
-        id="setupToggleBtn"
-        class="collapse-btn"
-        type="button"
-        aria-label="Expand or collapse audit details"
-        aria-expanded="true"
-      >
-        ▼
-      </button>
+      <div class="collapsible-body">
+        <label for="officerSelect">Audit Officer</label>
 
-    </div>
+        <select id="officerSelect" required>
+          <option value="">Select officer</option>
+          <option value="Officer A">Ng Wei Hong</option>
+          <option value="Officer B">Chen Hanjie</option>
+          <option value="Officer C">Tan Chu Mei</option>
+        </select>
 
-    <div
-      id="setupBody"
-      class="collapsible-body"
-    >
+        <!-- Shown immediately after selecting officer -->
+        <div id="assignmentDetails" hidden>
 
-      <label for="officerSelect">
-        Audit Officer
-      </label>
-
-      <select
-        id="officerSelect"
-        required
-      >
-        <option value="">
-          Select officer
-        </option>
-
-        <option value="Officer A">
-          Ng Wei Hong
-        </option>
-
-        <option value="Officer B">
-          Chen Hanjie
-        </option>
-
-        <option value="Officer C">
-          Tan Chu Mei
-        </option>
-      </select>
-
-
-      <!-- Display after officer selection -->
-
-      <div
-        id="assignmentDetails"
-        hidden
-      >
-
-        <label for="auditDateTime">
-          Current date &amp; time
-        </label>
-
-        <input
-          id="auditDateTime"
-          type="text"
-          readonly
-          placeholder="Automatically recorded"
-        >
-
-        <p class="hint">
-          Premises are automatically preselected
-          according to Singapore time.
-          You may change the assignment.
-        </p>
-
-
-        <!-- Assigned premises -->
-
-        <fieldset class="premise-fieldset">
-
-          <legend>
-            Assigned premise
-          </legend>
-
-          <label class="premise-option">
-
-            <input
-              type="radio"
-              name="premiseChoice"
-              value="am"
-            >
-
-            <span>
-              <strong id="amPremiseName">
-                AM premise
-              </strong>
-
-              <small>
-                Morning assignment
-              </small>
-            </span>
-
-          </label>
-
-
-          <label class="premise-option">
-
-            <input
-              type="radio"
-              name="premiseChoice"
-              value="pm"
-            >
-
-            <span>
-              <strong id="pmPremiseName">
-                PM premise
-              </strong>
-
-              <small>
-                Afternoon assignment
-              </small>
-            </span>
-
-          </label>
-
-
-          <label class="premise-option">
-
-            <input
-              type="radio"
-              name="premiseChoice"
-              value="other"
-            >
-
-            <span>
-              <strong>
-                Others
-              </strong>
-
-              <small>
-                Ad-hoc inspection
-              </small>
-            </span>
-
-          </label>
-
-        </fieldset>
-
-
-        <!-- Ad-hoc premise input -->
-
-        <div
-          id="otherPremiseGroup"
-          hidden
-        >
-
-          <label for="otherPremiseInput">
-            Ad-hoc premise name
+          <label for="auditDateTime">
+            Current date &amp; time (Singapore)
           </label>
 
           <input
-            id="otherPremiseInput"
+            id="auditDateTime"
             type="text"
-            placeholder="Enter premise name"
-            autocomplete="organization"
+            readonly
           >
 
-        </div>
+          <p class="hint">
+            Today's time preselects AM (before 12 pm)
+            or PM (12 pm onwards).
+            You can change the selection.
+          </p>
 
+          <fieldset class="premise-fieldset">
+            <legend>Assigned premise</legend>
 
-        <!-- GPS and device -->
+            <label class="premise-option">
+              <input
+                type="radio"
+                name="premiseChoice"
+                value="am"
+              >
+              <span>
+                <strong id="amPremiseName">AM premise</strong>
+                <small>Morning assignment</small>
+              </span>
+            </label>
 
-        <div class="status-grid">
+            <label class="premise-option">
+              <input
+                type="radio"
+                name="premiseChoice"
+                value="pm"
+              >
+              <span>
+                <strong id="pmPremiseName">PM premise</strong>
+                <small>Afternoon assignment</small>
+              </span>
+            </label>
 
-          <div>
-            <span class="label">
-              Location
-            </span>
+            <label class="premise-option">
+              <input
+                type="radio"
+                name="premiseChoice"
+                value="other"
+              >
+              <span>
+                <strong>Others</strong>
+                <small>Ad-hoc inspection</small>
+              </span>
+            </label>
+          </fieldset>
 
-            <span
-              id="locationStatus"
-              class="badge bad"
+          <div id="otherPremiseGroup" hidden>
+            <label for="otherPremiseInput">
+              Ad-hoc premise name
+            </label>
+
+            <input
+              id="otherPremiseInput"
+              type="text"
+              placeholder="Enter premise name"
+              autocomplete="organization"
             >
-              Not captured
-            </span>
           </div>
 
-          <div>
-            <span class="label">
-              Device
-            </span>
+          <div class="status-grid">
+            <div>
+              <span class="label">Location</span>
+              <span id="locationStatus" class="badge bad">
+                Not captured
+              </span>
+            </div>
 
-            <span
-              id="deviceStatus"
-              class="small-text"
-            >
-              Detecting…
-            </span>
+            <div>
+              <span class="label">Device</span>
+              <span id="deviceStatus" class="small-text">
+                Detecting…
+              </span>
+            </div>
           </div>
 
-        </div>
+          <button
+            id="locationBtn"
+            class="secondary"
+            type="button"
+          >
+            Enable / Refresh Location
+          </button>
 
+          <p
+            id="locationDetails"
+            class="hint"
+            aria-live="polite"
+          >
+            GPS location is mandatory before proceeding.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: OFFICER SELFIE -->
+    <section class="card" id="selfieCard">
+      <div class="collapsible-heading">
+        <div>
+          <h2>2. Officer selfie</h2>
+          <span id="selfieStatus" class="section-progress">
+            Not completed
+          </span>
+        </div>
 
         <button
-          id="locationBtn"
-          class="secondary"
+          id="selfieToggleBtn"
+          class="collapse-btn"
           type="button"
-        >
-          Enable / Refresh Location
-        </button>
+          aria-expanded="true"
+          aria-label="Expand or collapse selfie"
+        >▼</button>
+      </div>
 
-        <p
-          id="locationDetails"
-          class="hint"
-          aria-live="polite"
-        >
-          GPS location is mandatory
-          before proceeding.
+      <div class="collapsible-body">
+        <p class="hint">
+          Use the live front camera for officer verification.
+          Photo upload is disabled.
         </p>
 
+        <div class="camera-stage">
+          <video id="camera" autoplay muted playsinline></video>
+
+          <div
+            class="overlay selfie-overlay"
+            aria-hidden="true"
+          ></div>
+
+          <canvas id="captureCanvas" hidden></canvas>
+        </div>
+
+        <div class="button-row">
+          <button id="startSelfieBtn" type="button">
+            Start front camera
+          </button>
+
+          <button
+            id="captureSelfieBtn"
+            type="button"
+            disabled
+          >
+            Capture selfie
+          </button>
+        </div>
+
+        <div id="selfiePreview" class="preview-slot"></div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: ECC AND SFA -->
+    <section class="card" id="verificationCard">
+      <div class="collapsible-heading">
+        <div>
+          <h2>3. ECC &amp; SFA documents</h2>
+          <span
+            id="verificationStatus"
+            class="section-progress"
+          >
+            Not completed
+          </span>
+        </div>
+
+        <button
+          id="verificationToggleBtn"
+          class="collapse-btn"
+          type="button"
+          aria-expanded="true"
+          aria-label="Expand or collapse document checks"
+        >▼</button>
       </div>
 
-    </div>
+      <div class="collapsible-body">
+        <p class="hint">
+          Both documents must be photographed using
+          the live rear camera. ECC OCR starts
+          automatically after capture. SFA is photo-only.
+        </p>
 
-  </section>
+        <!-- ECC CARD -->
+        <div class="verification-item">
+          <h3>
+            Environmental Control Coordinator (ECC) card
+          </h3>
 
+          <div id="eccPreview" class="document-preview">
+            No ECC card captured
+          </div>
 
-  <!-- ========================================
-       SECTION 2: OFFICER SELFIE
-  ========================================= -->
+          <div class="button-row">
+            <button id="captureEccBtn" type="button">
+              Capture ECC card
+            </button>
+          </div>
 
-  <section
-    class="card collapsible-card"
-    id="selfieCard"
-  >
+          <p
+            id="eccOcrStatus"
+            class="hint"
+            aria-live="polite"
+          >
+            Capture the ECC card to start automatic OCR.
+          </p>
 
-    <div class="collapsible-heading">
+          <label for="eccName">ECC name (OCR)</label>
+          <input
+            id="eccName"
+            type="text"
+            placeholder="Automatically extracted; correct if necessary"
+            autocomplete="off"
+          >
 
-      <div>
-        <h2>
-          2. Officer selfie
-        </h2>
+          <label for="eccNumber">ECC number (OCR)</label>
+          <input
+            id="eccNumber"
+            type="text"
+            placeholder="Automatically extracted; correct if necessary"
+            autocomplete="off"
+          >
 
-        <span
-          id="selfieStatus"
-          class="section-progress"
-        >
-          Not completed
-        </span>
+          <label for="eccExpiry">Expiry date (OCR)</label>
+          <input id="eccExpiry" type="date">
+
+          <div class="verification-result">
+            <span class="label">
+              Date validity assessment
+            </span>
+
+            <span
+              id="eccValidityStatus"
+              class="badge bad"
+            >
+              Not checked
+            </span>
+          </div>
+
+          <p id="eccValidityDetails" class="hint">
+            Valid dates are checked against today's
+            Singapore date. OCR and dates do not prove
+            official registration status.
+          </p>
+        </div>
+
+        <!-- SFA LICENCE: PHOTO ONLY -->
+        <div class="verification-item">
+          <h3>SFA licence</h3>
+
+          <p class="hint">
+            Photo evidence only.
+            No OCR or licence-date check.
+          </p>
+
+          <div id="sfaPreview" class="document-preview">
+            No SFA licence captured
+          </div>
+
+          <div class="button-row">
+            <button id="captureSfaBtn" type="button">
+              Capture SFA licence
+            </button>
+          </div>
+
+          <p
+            id="sfaStatus"
+            class="hint"
+            aria-live="polite"
+          >
+            Awaiting SFA licence photograph.
+          </p>
+        </div>
       </div>
+    </section>
 
-      <button
-        id="selfieToggleBtn"
-        class="collapse-btn"
-        type="button"
-        aria-label="Expand or collapse officer selfie"
-        aria-expanded="true"
-      >
-        ▼
-      </button>
-
-    </div>
-
-
-    <div
-      id="selfieBody"
-      class="collapsible-body"
-    >
+    <!-- SECTION 4: AUDIT PHOTOS -->
+    <section class="card" id="auditCard">
+      <h2>4. Audit photographs</h2>
 
       <p class="hint">
-        Take a live front-camera selfie
-        for officer verification.
+        One live rear-camera photograph per area.
+        Six areas, including Tray Return.
+        No close-up photographs required.
       </p>
 
-      <div class="camera-stage">
+      <div id="sectionsContainer"></div>
+    </section>
 
-        <video
-          id="camera"
-          playsinline
-          autoplay
-          muted
-        ></video>
+    <!-- SECTION 5: REVIEW -->
+    <section class="card" id="reviewCard">
+      <h2>5. Review &amp; export</h2>
 
-        <div
-          id="overlay"
-          class="overlay selfie-overlay"
-          aria-hidden="true"
-        ></div>
-
-        <canvas
-          id="captureCanvas"
-          hidden
-        ></canvas>
-
+      <div
+        id="completionSummary"
+        class="summary-box"
+        aria-live="polite"
+      >
+        Complete the required items.
       </div>
 
-
       <div class="button-row">
-
         <button
-          id="startSelfieBtn"
-          type="button"
-        >
-          Start Camera
-        </button>
-
-        <button
-          id="captureSelfieBtn"
+          id="downloadBtn"
           type="button"
           disabled
         >
-          Capture Selfie
+          Download audit package
         </button>
-
       </div>
-
-
-      <div
-        id="selfiePreview"
-        class="preview-slot"
-      ></div>
-
-    </div>
-
-  </section>
-
-
-  <!-- ========================================
-       SECTION 3: ECC AND SFA VERIFICATION
-  ========================================= -->
-
-  <section
-    class="card collapsible-card"
-    id="verificationCard"
-  >
-
-    <div class="collapsible-heading">
-
-      <div>
-        <h2>
-          3. ECC &amp; SFA verification
-        </h2>
-
-        <span
-          id="verificationStatus"
-          class="section-progress"
-        >
-          Not completed
-        </span>
-      </div>
-
-      <button
-        id="verificationToggleBtn"
-        class="collapse-btn"
-        type="button"
-        aria-label="Expand or collapse verification"
-        aria-expanded="true"
-      >
-        ▼
-      </button>
-
-    </div>
-
-
-    <div
-      id="verificationBody"
-      class="collapsible-body"
-    >
 
       <p class="hint">
-        Capture the Environmental Control
-        Coordinator (ECC) card and SFA licence
-        using the live rear camera.
-        Gallery uploads are not available.
+        Drafts and images are stored only in this browser.
+        Reset (top right) clears the locally saved audit;
+        downloaded JSON files remain on your device.
       </p>
+    </section>
 
+  </main>
 
-      <!-- ECC CARD -->
-
-      <div
-        class="verification-item"
-        id="eccVerification"
-      >
-
-        <h3>
-          Environmental Control Coordinator (ECC)
-        </h3>
-
-        <p class="hint">
-          Capture a clear image of the ECC card.
-          OCR will attempt to extract the name
-          and expiry date.
-        </p>
-
-
-        <div
-          id="eccPreview"
-          class="document-preview"
-        >
-          No ECC card captured
+  <!-- TEMPLATE: ONE PHOTO PER AUDIT AREA -->
+  <template id="sectionTemplate">
+    <article class="audit-section">
+      <div class="section-heading">
+        <div>
+          <h3></h3>
+          <span class="section-progress">0/1</span>
         </div>
 
-
-        <div class="button-row">
-
-          <button
-            id="captureEccBtn"
-            type="button"
-          >
-            Capture ECC Card
-          </button>
-
-          <button
-            id="runEccOcrBtn"
-            class="secondary"
-            type="button"
-            disabled
-          >
-            Run OCR
-          </button>
-
-        </div>
-
-
-        <p
-          id="eccOcrStatus"
-          class="hint"
-          aria-live="polite"
-        >
-          Awaiting ECC card capture.
-        </p>
-
-
-        <label for="eccName">
-          ECC Name
-        </label>
-
-        <input
-          id="eccName"
-          type="text"
-          placeholder="Name extracted from card"
-          autocomplete="off"
-        >
-
-
-        <label for="eccExpiry">
-          ECC Expiry Date
-        </label>
-
-        <input
-          id="eccExpiry"
-          type="date"
-        >
-
-
-        <div class="verification-result">
-
-          <span class="label">
-            ECC Validity
-          </span>
-
-          <span
-            id="eccValidityStatus"
-            class="badge bad"
-          >
-            Not verified
-          </span>
-
-        </div>
-
-        <p
-          id="eccValidityDetails"
-          class="hint"
-        >
-          Expiry date must be checked
-          against the current date.
-        </p>
-
+        <button
+          class="collapse-btn section-toggle-btn"
+          type="button"
+          aria-expanded="true"
+          aria-label="Expand or collapse audit area"
+        >▼</button>
       </div>
 
-
-      <!-- SFA LICENCE -->
-
-      <div
-        class="verification-item"
-        id="sfaVerification"
-      >
-
-        <h3>
-          SFA Licence
-        </h3>
-
-        <p class="hint">
-          Capture the premise's SFA licence
-          using the rear camera.
-          OCR will attempt to extract the
-          licence information.
-        </p>
-
-
-        <div
-          id="sfaPreview"
-          class="document-preview"
-        >
-          No SFA licence captured
-        </div>
-
-
-        <div class="button-row">
-
-          <button
-            id="captureSfaBtn"
-            type="button"
-          >
-            Capture SFA Licence
-          </button>
-
-          <button
-            id="runSfaOcrBtn"
-            class="secondary"
-            type="button"
-            disabled
-          >
-            Run OCR
-          </button>
-
-        </div>
-
-
-        <p
-          id="sfaOcrStatus"
-          class="hint"
-          aria-live="polite"
-        >
-          Awaiting SFA licence capture.
-        </p>
-
-
-        <label for="sfaLicenceNumber">
-          SFA Licence Number
-        </label>
-
-        <input
-          id="sfaLicenceNumber"
-          type="text"
-          placeholder="Licence number"
-          autocomplete="off"
-        >
-
-
-        <label for="sfaPremiseName">
-          Licensed Premise Name
-        </label>
-
-        <input
-          id="sfaPremiseName"
-          type="text"
-          placeholder="Premise name on licence"
-          autocomplete="off"
-        >
-
-
-        <label for="sfaExpiry">
-          SFA Licence Expiry Date
-        </label>
-
-        <input
-          id="sfaExpiry"
-          type="date"
-        >
-
-
-        <div class="verification-result">
-
-          <span class="label">
-            SFA Licence Validity
-          </span>
-
-          <span
-            id="sfaValidityStatus"
-            class="badge bad"
-          >
-            Not verified
-          </span>
-
-        </div>
-
-        <p
-          id="sfaValidityDetails"
-          class="hint"
-        >
-          A date check is preliminary.
-          Official licence validity may require
-          verification against SFA records.
-        </p>
-
-      </div>
-
-
-      <p class="hint">
-        OCR results may contain errors.
-        Officers must review the extracted
-        information before proceeding.
-      </p>
-
-    </div>
-
-  </section>
-
-
-  <!-- ========================================
-       SECTION 4: AUDIT PHOTOGRAPHS
-  ========================================= -->
-
-  <section
-    class="card"
-    id="auditCard"
-  >
-
-    <h2>
-      4. Audit photos
-    </h2>
-
-    <p class="hint">
-      Capture one live photograph for each
-      of the six audit areas.
-      The rear camera is used automatically.
-    </p>
-
-    <p class="hint">
-      Align the photograph with the
-      25% opacity reference guide.
-      Blurry or poorly exposed images
-      may be rejected.
-    </p>
-
-    <div id="sectionsContainer"></div>
-
-  </section>
-
-
-  <!-- ========================================
-       SECTION 5: REVIEW AND EXPORT
-  ========================================= -->
-
-  <section
-    class="card"
-    id="reviewCard"
-  >
-
-    <h2>
-      5. Review &amp; export
-    </h2>
-
-    <div
-      id="completionSummary"
-      class="summary-box"
-      aria-live="polite"
-    >
-      Complete the required fields,
-      verification and photographs.
-    </div>
-
-
-    <div class="button-row">
-
-      <button
-        id="downloadBtn"
-        type="button"
-        disabled
-      >
-        Download Audit Package
-      </button>
-
-      <button
-        id="resetBtn"
-        class="danger"
-        type="button"
-      >
-        Reset Audit
-      </button>
-
-    </div>
-
-
-    <p class="hint">
-      This GitHub Pages mock-up stores draft
-      information locally in the browser.
-      It does not submit data to a central database.
-    </p>
-
-  </section>
-
-</main>
-
-
-<!-- ========================================
-     AUDIT SECTION TEMPLATE
-     ONE PHOTOGRAPH PER AREA
-========================================= -->
-
-<template id="sectionTemplate">
-
-  <article class="audit-section">
-
-    <div class="section-heading">
-
-      <div>
-        <h3></h3>
-
-        <span class="section-progress">
-          0/1
-        </span>
-      </div>
-
-      <button
-        class="collapse-btn section-toggle-btn"
-        type="button"
-        aria-label="Expand or collapse audit section"
-        aria-expanded="true"
-      >
-        ▼
-      </button>
-
-    </div>
-
-
-    <div class="section-body">
-
-      <p class="section-help"></p>
-
-      <div class="capture-grid single-capture">
-
-        <div
-          class="capture-item"
-          data-shot="overview"
-        >
-
-          <h4>
-            Audit Photograph
-          </h4>
-
+      <div class="section-body">
+        <p class="section-help"></p>
+
+        <div class="capture-item">
+          <h4>Audit photograph</h4>
           <div class="mini-preview"></div>
 
           <button
             class="capture-shot-btn"
             type="button"
           >
-            Take Photograph
+            Take photograph
           </button>
+        </div>
+      </div>
+    </article>
+  </template>
 
+  <!-- SHARED REAR-CAMERA DIALOG -->
+  <dialog id="captureDialog">
+    <div class="dialog-inner">
+
+      <div class="dialog-title-row">
+        <div>
+          <h3 id="dialogTitle">Capture</h3>
+          <p id="dialogHint" class="hint"></p>
         </div>
 
+        <button
+          id="closeDialogBtn"
+          class="icon-btn"
+          type="button"
+          aria-label="Close camera"
+        >×</button>
+      </div>
+
+      <div class="camera-stage large">
+        <video
+          id="auditCamera"
+          autoplay
+          muted
+          playsinline
+        ></video>
+
+        <img
+          id="auditOnionSkin"
+          class="onion-skin"
+          alt=""
+          aria-hidden="true"
+          hidden
+        >
+
+        <canvas id="auditCanvas" hidden></canvas>
+      </div>
+
+      <p
+        id="qualityMessage"
+        class="quality-message"
+        aria-live="polite"
+      >
+        Hold the phone steady and keep the subject readable.
+      </p>
+
+      <div class="button-row">
+        <button id="captureAuditBtn" type="button">
+          Capture photograph
+        </button>
       </div>
 
     </div>
-
-  </article>
-
-</template>
-
-
-<!-- ========================================
-     LIVE REAR-CAMERA CAPTURE DIALOG
-========================================= -->
-
-<dialog id="captureDialog">
-
-  <div class="dialog-inner">
-
-    <div class="dialog-title-row">
-
-      <div>
-        <h3 id="dialogTitle">
-          Capture
-        </h3>
-
-        <p
-          id="dialogHint"
-          class="hint"
-        ></p>
-      </div>
-
-      <button
-        id="closeDialogBtn"
-        class="icon-btn"
-        type="button"
-        aria-label="Close camera"
-      >
-        ×
-      </button>
-
-    </div>
-
-
-    <div class="camera-stage large">
-
-      <video
-        id="auditCamera"
-        playsinline
-        autoplay
-        muted
-      ></video>
-
-      <!-- 25% opacity reference image -->
-
-      <img
-        id="auditOnionSkin"
-        class="onion-skin"
-        src=""
-        alt=""
-        aria-hidden="true"
-      >
-
-      <div
-        id="auditOverlay"
-        class="overlay"
-        aria-hidden="true"
-      ></div>
-
-      <canvas
-        id="auditCanvas"
-        hidden
-      ></canvas>
-
-    </div>
-
-
-    <div
-      id="qualityMessage"
-      class="quality-message"
-      aria-live="polite"
-    >
-      Align the live camera with the
-      reference image.
-    </div>
-
-
-    <div class="button-row">
-
-      <button
-        id="captureAuditBtn"
-        type="button"
-      >
-        Capture Photograph
-      </button>
-
-    </div>
-
-  </div>
-
-</dialog>
-
-
-<!-- ========================================
-     OCR LIBRARY
-========================================= -->
-
-<script
-  src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"
-></script>
-
-
-<!-- ========================================
-     APPLICATION JAVASCRIPT
-========================================= -->
-
-<script
-  src="app.js?v=20261123-3"
-  defer
-></script>
-
+  </dialog>
 </body>
 </html>
