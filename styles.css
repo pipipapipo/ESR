@@ -12,22 +12,21 @@
   --muted: #667085;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
+body { margin: 0; }
 
-body {
-  margin: 0;
-}
-
-button,
-input,
-select {
+button, input, select {
   font: inherit;
 }
 
 button {
   cursor: pointer;
+  border: 0;
+  border-radius: 8px;
+  padding: 11px 14px;
+  background: var(--accent);
+  color: white;
+  font-weight: 700;
 }
 
 button:disabled {
@@ -35,9 +34,8 @@ button:disabled {
   opacity: 0.45;
 }
 
-/* ==========================================
-   GENERAL LAYOUT
-========================================== */
+button.secondary { background: #465365; }
+button.danger { background: var(--danger); }
 
 .app-shell {
   width: min(920px, 100%);
@@ -45,10 +43,7 @@ button:disabled {
   padding: 18px;
 }
 
-.app-header {
-  margin-bottom: 16px;
-}
-
+.app-header { margin-bottom: 16px; }
 .app-header h1 {
   margin: 0 0 4px;
   font-size: 1.8rem;
@@ -69,38 +64,26 @@ button:disabled {
 
 h2 {
   margin-top: 0;
+  margin-bottom: 5px;
   font-size: 1.25rem;
 }
 
-h3,
-h4 {
-  margin-top: 0;
-}
-
-/* ==========================================
-   FORM INPUTS
-========================================== */
+h3, h4 { margin-top: 0; }
 
 label {
-  display: grid;
-  gap: 6px;
-  margin-bottom: 14px;
+  display: block;
   font-weight: 600;
+  margin: 12px 0 6px;
 }
 
-input,
-select {
+input:not([type="radio"]), select {
+  display: block;
   width: 100%;
   padding: 12px;
   border: 1px solid #bcc5cf;
   border-radius: 8px;
-  background: #fff;
-}
-
-input:focus,
-select:focus {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  background: white;
+  margin-bottom: 12px;
 }
 
 input[readonly] {
@@ -108,54 +91,18 @@ input[readonly] {
   color: #344054;
 }
 
-/* ==========================================
-   BUTTONS
-========================================== */
-
-button {
-  border: 0;
-  border-radius: 8px;
-  padding: 11px 14px;
-  background: var(--accent);
-  color: #fff;
-  font-weight: 700;
+[hidden] {
+  display: none !important;
 }
-
-button.secondary {
-  background: #465365;
-}
-
-button.danger {
-  background: var(--danger);
-}
-
-.icon-btn {
-  background: transparent;
-  color: #333;
-  font-size: 28px;
-  padding: 0 6px;
-}
-
-.button-row {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 12px;
-}
-
-/* ==========================================
-   TEXT AND STATUS
-========================================== */
 
 .hint {
   color: var(--muted);
-  margin: 6px 0 12px;
+  margin: 8px 0 12px;
   font-size: 0.92rem;
 }
 
 .small-text {
   font-size: 0.9rem;
-  color: #344054;
 }
 
 .label {
@@ -163,7 +110,6 @@ button.danger {
   color: var(--muted);
   font-size: 0.78rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
   margin-bottom: 5px;
 }
 
@@ -192,9 +138,12 @@ button.danger {
   color: #05603a;
 }
 
-/* ==========================================
-   COLLAPSIBLE SECTIONS
-========================================== */
+.section-progress {
+  color: var(--accent);
+  font-weight: 800;
+}
+
+/* COLLAPSIBLE SECTIONS */
 
 .collapsible-heading,
 .section-heading {
@@ -204,18 +153,11 @@ button.danger {
   gap: 12px;
 }
 
-.collapsible-heading h2,
-.section-heading h3 {
-  margin-bottom: 4px;
-}
-
 .collapse-btn {
   background: transparent;
   color: #344054;
-  padding: 8px 10px;
   font-size: 1.15rem;
-  line-height: 1;
-  transition: transform 0.2s ease;
+  padding: 8px 10px;
 }
 
 .collapse-btn:hover {
@@ -231,53 +173,35 @@ button.danger {
   transform: rotate(-90deg);
 }
 
-.section-progress {
-  font-weight: 800;
-  color: var(--accent);
-}
-
-/* ==========================================
-   SECTION 1: PREMISE SELECTION
-========================================== */
+/* PREMISE RADIO BUTTONS */
 
 .premise-fieldset {
   border: 1px solid var(--border);
   border-radius: 10px;
+  margin: 14px 0;
   padding: 12px;
-  margin: 12px 0 16px;
   min-width: 0;
 }
 
 .premise-fieldset legend {
-  font-weight: 700;
   padding: 0 6px;
+  font-weight: 700;
 }
 
 .premise-option {
   display: flex;
   align-items: center;
   gap: 12px;
-
-  padding: 14px;
-  margin-bottom: 8px;
-
+  padding: 13px;
+  margin: 0 0 8px;
   border: 1px solid var(--border);
   border-radius: 10px;
-
-  background: #fff;
   font-weight: 500;
   cursor: pointer;
-
-  transition: background 0.2s,
-    border-color 0.2s;
 }
 
 .premise-option:last-child {
   margin-bottom: 0;
-}
-
-.premise-option:hover {
-  background: #f8fafc;
 }
 
 .premise-option:has(input:checked) {
@@ -286,12 +210,11 @@ button.danger {
 }
 
 .premise-option input[type="radio"] {
-  width: 18px;
-  height: 18px;
+  width: 19px;
+  height: 19px;
   margin: 0;
-  padding: 0;
-  flex-shrink: 0;
   accent-color: var(--accent);
+  flex-shrink: 0;
 }
 
 .premise-option span {
@@ -300,38 +223,26 @@ button.danger {
   gap: 3px;
 }
 
-.premise-option strong {
-  font-size: 0.96rem;
-}
-
 .premise-option small {
   color: var(--muted);
   font-size: 0.82rem;
 }
 
-#otherPremiseGroup {
+/* BUTTONS */
+
+.button-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
   margin-top: 12px;
 }
 
-#auditDateTime {
-  background: #f2f4f7;
-  color: #344054;
-}
-
-/* Respect HTML hidden attribute */
-[hidden] {
-  display: none !important;
-}
-
-/* ==========================================
-   CAMERA
-========================================== */
+/* CAMERAS */
 
 .camera-stage {
   position: relative;
   width: 100%;
   aspect-ratio: 4 / 3;
-
   background: #111;
   border-radius: 10px;
   overflow: hidden;
@@ -342,19 +253,11 @@ button.danger {
 }
 
 .camera-stage video {
-  position: relative;
-  z-index: 1;
-
   width: 100%;
   height: 100%;
-
   object-fit: cover;
   display: block;
 }
-
-/* ==========================================
-   SELFIE OVERLAY
-========================================== */
 
 .overlay {
   position: absolute;
@@ -363,48 +266,35 @@ button.danger {
   z-index: 3;
 }
 
-.overlay:not(.selfie-overlay)::before {
-  display: none;
-}
-
 .selfie-overlay::before {
   content: "";
   position: absolute;
-
   inset: 12% 25%;
-
   border: 3px dashed rgba(255,255,255,0.9);
-  border-radius: 45% 45% 42% 42%;
-
-  box-shadow:
-    0 0 0 9999px rgba(0,0,0,0.14);
+  border-radius: 45%;
+  box-shadow: 0 0 0 9999px rgba(0,0,0,0.14);
 }
 
-/* ==========================================
-   AUDIT ONION-SKIN OVERLAY
-========================================== */
+/* KEEP ONION SKIN AT 25% */
 
 .onion-skin {
   position: absolute;
   inset: 0;
-
   width: 100%;
   height: 100%;
-
   object-fit: contain;
-
-  /* Reference image opacity: 25% */
   opacity: 0.25;
-
   pointer-events: none;
   user-select: none;
-
   z-index: 2;
 }
 
-/* ==========================================
-   PHOTO PREVIEWS
-========================================== */
+/* PHOTO PREVIEWS */
+
+.preview-slot {
+  max-width: 280px;
+  margin-top: 12px;
+}
 
 .preview-slot img,
 .mini-preview img {
@@ -413,31 +303,22 @@ button.danger {
   border-radius: 8px;
 }
 
-.preview-slot {
-  margin-top: 12px;
-  max-width: 280px;
-}
-
 .mini-preview {
   background: #eef1f4;
   aspect-ratio: 4 / 3;
   border-radius: 8px;
-
   display: grid;
   place-items: center;
-
-  color: #7b8794;
   overflow: hidden;
   margin-bottom: 8px;
 }
 
 .mini-preview:empty::after {
   content: "Not captured";
+  color: #7b8794;
 }
 
-/* ==========================================
-   AUDIT SECTIONS
-========================================== */
+/* AUDIT SECTIONS */
 
 .audit-section {
   border-top: 1px solid var(--border);
@@ -461,39 +342,30 @@ button.danger {
 }
 
 .capture-item {
+  padding: 12px;
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 12px;
-}
-
-.capture-item h4 {
-  margin-bottom: 8px;
 }
 
 .capture-shot-btn {
   width: 100%;
 }
 
-/* ==========================================
-   REVIEW AND EXPORT
-========================================== */
+/* EXPORT */
 
 .summary-box {
   border: 1px solid var(--border);
   background: #f8fafc;
-
   padding: 12px;
   border-radius: 8px;
-
   white-space: pre-line;
 }
 
 .quality-message {
   margin-top: 10px;
   padding: 9px 11px;
-  border-radius: 8px;
-
   background: #f2f4f7;
+  border-radius: 8px;
   color: #344054;
 }
 
@@ -507,9 +379,7 @@ button.danger {
   color: #075c3b;
 }
 
-/* ==========================================
-   CAMERA DIALOG
-========================================== */
+/* CAMERA DIALOG */
 
 #captureDialog {
   width: min(760px, 96vw);
@@ -533,31 +403,18 @@ button.danger {
   gap: 12px;
 }
 
-/* ==========================================
-   MOBILE RESPONSIVE
-========================================== */
+.icon-btn {
+  background: transparent;
+  color: #333;
+  font-size: 28px;
+  padding: 0 6px;
+}
 
 @media (max-width: 640px) {
-
-  .app-shell {
-    padding: 10px;
-  }
-
+  .app-shell { padding: 10px; }
+  .card { padding: 14px; }
   .status-grid,
   .capture-grid {
     grid-template-columns: 1fr;
   }
-
-  .card {
-    padding: 14px;
-  }
-
-  .premise-option {
-    padding: 12px;
-  }
-
-  .app-header h1 {
-    font-size: 1.5rem;
-  }
-
 }
