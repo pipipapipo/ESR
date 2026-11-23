@@ -1,32 +1,84 @@
 
+/* ==========================================
+   ESR AUDIT CAPTURE
+   COMPLETE STYLESHEET
+   Version: 2026-11-23
+========================================== */
+
+/* ==========================================
+   1. ROOT VARIABLES
+========================================== */
+
 :root {
-  font-family: Inter, system-ui, -apple-system,
-    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
 
   color: #1f2937;
   background: #f4f6f8;
 
   --border: #d7dde4;
   --accent: #176b45;
+  --accent-light: #edf8f1;
+
   --danger: #a12d2d;
+  --danger-light: #fee4e2;
+
   --muted: #667085;
+  --text: #1f2937;
+
+  --background: #f4f6f8;
+  --card-background: #ffffff;
+
+  --radius: 12px;
 }
 
-* { box-sizing: border-box; }
-body { margin: 0; }
+/* ==========================================
+   2. GLOBAL RESET
+========================================== */
 
-button, input, select {
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--background);
+  color: var(--text);
+}
+
+button,
+input,
+select,
+textarea {
   font: inherit;
 }
 
 button {
   cursor: pointer;
+
   border: 0;
   border-radius: 8px;
+
   padding: 11px 14px;
+
   background: var(--accent);
-  color: white;
+  color: #ffffff;
+
   font-weight: 700;
+
+  transition:
+    background 0.2s ease,
+    opacity 0.2s ease;
 }
 
 button:disabled {
@@ -34,8 +86,28 @@ button:disabled {
   opacity: 0.45;
 }
 
-button.secondary { background: #465365; }
-button.danger { background: var(--danger); }
+button.secondary {
+  background: #465365;
+}
+
+button.danger {
+  background: var(--danger);
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid #8ccbb0;
+  outline-offset: 2px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* ==========================================
+   3. MAIN APP LAYOUT
+========================================== */
 
 .app-shell {
   width: min(920px, 100%);
@@ -43,10 +115,66 @@ button.danger { background: var(--danger); }
   padding: 18px;
 }
 
-.app-header { margin-bottom: 16px; }
+.card {
+  background: var(--card-background);
+
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+
+  padding: 18px;
+  margin-bottom: 14px;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  color: var(--text);
+}
+
+h2 {
+  margin: 0 0 5px;
+  font-size: 1.25rem;
+}
+
+h3 {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+}
+
+h4 {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+}
+
+p {
+  line-height: 1.45;
+}
+
+/* ==========================================
+   4. HEADER
+========================================== */
+
+.app-header {
+  margin-bottom: 16px;
+}
+
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.header-text {
+  flex: 1;
+  min-width: 0;
+}
+
 .app-header h1 {
   margin: 0 0 4px;
   font-size: 1.8rem;
+  line-height: 1.2;
 }
 
 .app-header p {
@@ -54,82 +182,108 @@ button.danger { background: var(--danger); }
   color: var(--muted);
 }
 
-.card {
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 18px;
-  margin-bottom: 14px;
+/* Permanent reset button */
+
+.header-reset-btn {
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 42px;
+  height: 42px;
+
+  padding: 0;
+
+  border: 1px solid #f2b8b5;
+  border-radius: 10px;
+
+  background: #fff1f0;
+  color: var(--danger);
+
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
 }
 
-h2 {
-  margin-top: 0;
-  margin-bottom: 5px;
-  font-size: 1.25rem;
+.header-reset-btn:hover {
+  background: #fee4e2;
 }
 
-h3, h4 { margin-top: 0; }
+.header-reset-btn:active {
+  background: #fecdca;
+}
 
-label {
+.header-reset-btn span {
   display: block;
+  transform: translateY(-2px);
+}
+
+/* Draft save status */
+
+.draft-status {
+  display: inline-block;
+
+  margin-top: 8px !important;
+
+  color: #176b45 !important;
+  font-size: 0.82rem;
   font-weight: 600;
-  margin: 12px 0 6px;
 }
 
-input:not([type="radio"]), select {
-  display: block;
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #bcc5cf;
-  border-radius: 8px;
-  background: white;
-  margin-bottom: 12px;
-}
-
-input[readonly] {
-  background: #f2f4f7;
-  color: #344054;
-}
-
-[hidden] {
-  display: none !important;
-}
+/* ==========================================
+   5. TEXT AND STATUS
+========================================== */
 
 .hint {
   color: var(--muted);
+
   margin: 8px 0 12px;
+
   font-size: 0.92rem;
+  line-height: 1.45;
 }
 
 .small-text {
   font-size: 0.9rem;
+  color: #344054;
 }
 
 .label {
   display: block;
+
   color: var(--muted);
+
   font-size: 0.78rem;
   text-transform: uppercase;
+  letter-spacing: 0.04em;
+
   margin-bottom: 5px;
 }
 
-.status-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin: 12px 0;
+.section-progress {
+  display: inline-block;
+
+  color: var(--accent);
+
+  font-size: 0.85rem;
+  font-weight: 800;
 }
 
 .badge {
   display: inline-block;
+
   padding: 5px 8px;
+
   border-radius: 999px;
+
   font-size: 0.82rem;
   font-weight: 700;
 }
 
 .badge.bad {
-  background: #fee4e2;
+  background: var(--danger-light);
   color: #912018;
 }
 
@@ -138,26 +292,99 @@ input[readonly] {
   color: #05603a;
 }
 
-.section-progress {
-  color: var(--accent);
-  font-weight: 800;
+.badge.warn {
+  background: #fff4e5;
+  color: #854a0e;
 }
 
-/* COLLAPSIBLE SECTIONS */
+/* ==========================================
+   6. FORM ELEMENTS
+========================================== */
+
+label {
+  display: block;
+
+  margin: 12px 0 6px;
+
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+input:not([type="radio"]),
+select,
+textarea {
+  display: block;
+
+  width: 100%;
+  max-width: 100%;
+
+  padding: 12px;
+
+  border: 1px solid #bcc5cf;
+  border-radius: 8px;
+
+  background: #ffffff;
+  color: var(--text);
+
+  margin-bottom: 12px;
+}
+
+input[readonly] {
+  background: #f2f4f7;
+  color: #344054;
+}
+
+input::placeholder {
+  color: #98a2b3;
+}
+
+select {
+  appearance: auto;
+  min-height: 44px;
+}
+
+/* ==========================================
+   7. COLLAPSIBLE SECTIONS
+========================================== */
 
 .collapsible-heading,
 .section-heading {
   display: flex;
+
   justify-content: space-between;
   align-items: center;
+
   gap: 12px;
 }
 
+.collapsible-heading > div,
+.section-heading > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.collapsible-heading h2,
+.section-heading h3 {
+  margin-bottom: 4px;
+}
+
+.collapsible-body,
+.section-body {
+  margin-top: 12px;
+}
+
 .collapse-btn {
+  flex-shrink: 0;
+
   background: transparent;
   color: #344054;
-  font-size: 1.15rem;
+
   padding: 8px 10px;
+
+  font-size: 1.15rem;
+  line-height: 1;
+
+  transition: transform 0.2s ease;
 }
 
 .collapse-btn:hover {
@@ -173,54 +400,84 @@ input[readonly] {
   transform: rotate(-90deg);
 }
 
-/* PREMISE RADIO BUTTONS */
+/* ==========================================
+   8. SECTION 1 - PREMISE SELECTION
+========================================== */
 
 .premise-fieldset {
+  min-width: 0;
+
   border: 1px solid var(--border);
   border-radius: 10px;
-  margin: 14px 0;
+
   padding: 12px;
-  min-width: 0;
+
+  margin: 14px 0;
 }
 
 .premise-fieldset legend {
   padding: 0 6px;
+
+  font-size: 0.92rem;
   font-weight: 700;
 }
 
 .premise-option {
   display: flex;
+
   align-items: center;
   gap: 12px;
+
   padding: 13px;
+
   margin: 0 0 8px;
+
   border: 1px solid var(--border);
   border-radius: 10px;
+
+  background: #ffffff;
+
   font-weight: 500;
   cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .premise-option:last-child {
   margin-bottom: 0;
 }
 
+.premise-option:hover {
+  background: #f8fafc;
+}
+
 .premise-option:has(input:checked) {
   border-color: var(--accent);
-  background: #edf8f1;
+  background: var(--accent-light);
 }
 
 .premise-option input[type="radio"] {
+  flex-shrink: 0;
+
   width: 19px;
   height: 19px;
+
   margin: 0;
+
   accent-color: var(--accent);
-  flex-shrink: 0;
 }
 
 .premise-option span {
   display: flex;
   flex-direction: column;
+
   gap: 3px;
+}
+
+.premise-option strong {
+  font-size: 0.92rem;
 }
 
 .premise-option small {
@@ -228,23 +485,62 @@ input[readonly] {
   font-size: 0.82rem;
 }
 
-/* BUTTONS */
-
-.button-row {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+#otherPremiseGroup {
   margin-top: 12px;
 }
 
-/* CAMERAS */
+/* ==========================================
+   9. LOCATION AND DEVICE STATUS
+========================================== */
+
+.status-grid {
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+
+  margin: 12px 0;
+}
+
+.status-grid > div {
+  min-width: 0;
+}
+
+#locationDetails {
+  overflow-wrap: anywhere;
+}
+
+/* ==========================================
+   10. BUTTON ROWS
+========================================== */
+
+.button-row {
+  display: flex;
+
+  gap: 10px;
+  flex-wrap: wrap;
+
+  margin-top: 12px;
+}
+
+.button-row button {
+  min-height: 42px;
+}
+
+/* ==========================================
+   11. CAMERA STAGE
+========================================== */
 
 .camera-stage {
   position: relative;
+
   width: 100%;
   aspect-ratio: 4 / 3;
-  background: #111;
+
+  background: #111111;
+
   border-radius: 10px;
+
   overflow: hidden;
 }
 
@@ -253,75 +549,186 @@ input[readonly] {
 }
 
 .camera-stage video {
+  position: relative;
+  z-index: 1;
+
   width: 100%;
   height: 100%;
+
   object-fit: cover;
   display: block;
 }
 
+.camera-stage canvas {
+  display: none;
+}
+
+/* ==========================================
+   12. SELFIE GUIDE
+========================================== */
+
 .overlay {
   position: absolute;
   inset: 0;
+
   pointer-events: none;
+
   z-index: 3;
 }
 
 .selfie-overlay::before {
   content: "";
+
   position: absolute;
+
   inset: 12% 25%;
+
   border: 3px dashed rgba(255,255,255,0.9);
-  border-radius: 45%;
-  box-shadow: 0 0 0 9999px rgba(0,0,0,0.14);
+  border-radius: 45% 45% 42% 42%;
+
+  box-shadow:
+    0 0 0 9999px rgba(0,0,0,0.14);
 }
 
-/* KEEP ONION SKIN AT 25% */
+/* ==========================================
+   13. ONION-SKIN REFERENCE
+   25% OPACITY
+========================================== */
 
 .onion-skin {
   position: absolute;
   inset: 0;
+
   width: 100%;
   height: 100%;
+
   object-fit: contain;
+
   opacity: 0.25;
+
   pointer-events: none;
   user-select: none;
+
   z-index: 2;
 }
 
-/* PHOTO PREVIEWS */
+/* ==========================================
+   14. SELFIE AND DOCUMENT PREVIEWS
+========================================== */
 
 .preview-slot {
-  max-width: 280px;
   margin-top: 12px;
+  max-width: 280px;
 }
 
-.preview-slot img,
-.mini-preview img {
+.preview-slot img {
   width: 100%;
+  height: auto;
+
   display: block;
+
   border-radius: 8px;
 }
 
-.mini-preview {
+.document-preview {
+  display: flex;
+
+  justify-content: center;
+  align-items: center;
+
+  width: 100%;
+  min-height: 180px;
+
+  padding: 12px;
+
   background: #eef1f4;
-  aspect-ratio: 4 / 3;
-  border-radius: 8px;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  margin-bottom: 8px;
-}
 
-.mini-preview:empty::after {
-  content: "Not captured";
+  border: 1px dashed #bcc5cf;
+  border-radius: 10px;
+
   color: #7b8794;
+
+  font-size: 0.9rem;
+  text-align: center;
+
+  overflow: hidden;
 }
 
-/* AUDIT SECTIONS */
+.document-preview img {
+  display: block;
+
+  width: 100%;
+  max-height: 340px;
+
+  object-fit: contain;
+
+  border-radius: 8px;
+}
+
+/* ==========================================
+   15. SECTION 3 - ECC/SFA VERIFICATION
+========================================== */
+
+.verification-item {
+  padding: 16px 0;
+
+  border-top: 1px solid var(--border);
+}
+
+.verification-item:first-of-type {
+  border-top: 0;
+  padding-top: 4px;
+}
+
+.verification-item h3 {
+  margin-bottom: 6px;
+}
+
+.verification-item .button-row {
+  margin: 12px 0;
+}
+
+.verification-result {
+  display: flex;
+
+  flex-direction: column;
+  align-items: flex-start;
+
+  gap: 5px;
+
+  margin-top: 14px;
+  margin-bottom: 8px;
+
+  padding: 12px;
+
+  background: #f8fafc;
+
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.verification-result .label {
+  margin-bottom: 2px;
+}
+
+#eccOcrStatus,
+#sfaOcrStatus {
+  margin-top: 10px;
+  overflow-wrap: anywhere;
+}
+
+#eccValidityDetails,
+#sfaValidityDetails {
+  margin-top: 8px;
+}
+
+/* ==========================================
+   16. SECTION 4 - AUDIT PHOTOS
+========================================== */
 
 .audit-section {
   border-top: 1px solid var(--border);
+
   padding: 16px 0;
 }
 
@@ -332,41 +739,116 @@ input[readonly] {
 
 .section-help {
   color: var(--muted);
-  margin-top: 8px;
+
+  margin: 8px 0 12px;
+
+  font-size: 0.9rem;
+  line-height: 1.45;
 }
 
 .capture-grid {
   display: grid;
+
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
 
+/* One photograph per audit area */
+
+.capture-grid.single-capture {
+  grid-template-columns: 1fr;
+}
+
 .capture-item {
-  padding: 12px;
   border: 1px solid var(--border);
   border-radius: 10px;
+
+  padding: 12px;
+
+  background: #ffffff;
+}
+
+.capture-item h4 {
+  margin-bottom: 8px;
 }
 
 .capture-shot-btn {
   width: 100%;
 }
 
-/* EXPORT */
+/* Audit image preview */
+
+.mini-preview {
+  display: grid;
+
+  place-items: center;
+
+  width: 100%;
+  aspect-ratio: 4 / 3;
+
+  margin-bottom: 8px;
+
+  background: #eef1f4;
+
+  border-radius: 8px;
+
+  overflow: hidden;
+}
+
+.mini-preview:empty::after {
+  content: "Not captured";
+
+  color: #7b8794;
+
+  font-size: 0.9rem;
+}
+
+.mini-preview img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: contain;
+
+  border-radius: 8px;
+}
+
+/* ==========================================
+   17. SECTION 5 - REVIEW AND EXPORT
+========================================== */
 
 .summary-box {
   border: 1px solid var(--border);
-  background: #f8fafc;
-  padding: 12px;
   border-radius: 8px;
+
+  background: #f8fafc;
+
+  padding: 12px;
+
   white-space: pre-line;
+
+  line-height: 1.55;
+
+  font-size: 0.92rem;
 }
+
+/* ==========================================
+   18. PHOTO QUALITY MESSAGES
+========================================== */
 
 .quality-message {
   margin-top: 10px;
+
   padding: 9px 11px;
-  background: #f2f4f7;
+
   border-radius: 8px;
+
+  background: #f2f4f7;
   color: #344054;
+
+  font-size: 0.9rem;
+  line-height: 1.4;
 }
 
 .quality-message.warn {
@@ -379,13 +861,21 @@ input[readonly] {
   color: #075c3b;
 }
 
-/* CAMERA DIALOG */
+/* ==========================================
+   19. CAMERA DIALOG
+========================================== */
 
 #captureDialog {
   width: min(760px, 96vw);
+
+  max-height: 95vh;
+
   border: 0;
   border-radius: 14px;
+
   padding: 0;
+
+  overflow-y: auto;
 }
 
 #captureDialog::backdrop {
@@ -398,23 +888,163 @@ input[readonly] {
 
 .dialog-title-row {
   display: flex;
+
   justify-content: space-between;
   align-items: flex-start;
+
   gap: 12px;
 }
 
+.dialog-title-row h3 {
+  margin-bottom: 4px;
+}
+
 .icon-btn {
+  flex-shrink: 0;
+
   background: transparent;
-  color: #333;
+  color: #333333;
+
   font-size: 28px;
+
   padding: 0 6px;
 }
 
+.icon-btn:hover {
+  background: #f2f4f7;
+}
+
+/* ==========================================
+   20. MOBILE LAYOUT
+========================================== */
+
 @media (max-width: 640px) {
-  .app-shell { padding: 10px; }
-  .card { padding: 14px; }
+
+  .app-shell {
+    padding: 10px;
+  }
+
+  .card {
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+
+  .app-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .header-reset-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 30px;
+  }
+
+  h2 {
+    font-size: 1.1rem;
+  }
+
+  h3 {
+    font-size: 1rem;
+  }
+
   .status-grid,
   .capture-grid {
     grid-template-columns: 1fr;
   }
+
+  .premise-fieldset {
+    padding: 10px;
+  }
+
+  .premise-option {
+    padding: 12px;
+  }
+
+  .button-row {
+    gap: 8px;
+  }
+
+  .button-row button {
+    flex: 1 1 auto;
+  }
+
+  .camera-stage.large {
+    max-height: 65vh;
+  }
+
+  .dialog-inner {
+    padding: 12px;
+  }
+
+  .document-preview {
+    min-height: 160px;
+  }
+
+  .verification-item {
+    padding: 14px 0;
+  }
+
 }
+
+/* ==========================================
+   21. VERY SMALL MOBILE SCREENS
+========================================== */
+
+@media (max-width: 380px) {
+
+  .app-shell {
+    padding: 8px;
+  }
+
+  .card {
+    padding: 12px;
+  }
+
+  .app-header h1 {
+    font-size: 1.35rem;
+  }
+
+  .header-reset-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 27px;
+  }
+
+  .premise-option {
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .premise-option strong {
+    font-size: 0.85rem;
+  }
+
+  .premise-option small {
+    font-size: 0.76rem;
+  }
+
+  button {
+    padding: 10px 12px;
+  }
+
+}
+
+/* ==========================================
+   22. ACCESSIBILITY
+========================================== */
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+
+}
+
+/* ==========================================
+   END OF STYLESHEET
+========================================== */
