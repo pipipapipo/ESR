@@ -1,175 +1,490 @@
-:root {
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: #1f2937;
-  background: #f4f6f8;
-  --border: #d7dde4;
-  --accent: #176b45;
-  --danger: #a12d2d;
-  --muted: #667085;
-}
 
-* { box-sizing: border-box; }
-body { margin: 0; }
-button, input, select { font: inherit; }
-button { cursor: pointer; }
-button:disabled { cursor: not-allowed; opacity: .45; }
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#ffffff" />
+  <title>ESR Audit Capture</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
 
-.app-shell {
-  width: min(920px, 100%);
-  margin: 0 auto;
-  padding: 18px;
-}
+<body>
+  <main class="app-shell">
 
-.app-header { margin-bottom: 16px; }
-.app-header h1 { margin: 0 0 4px; font-size: 1.8rem; }
-.app-header p { margin: 0; color: var(--muted); }
+    <header class="app-header">
+      <h1>ESR Audit Capture</h1>
+      <p>Live camera capture with mandatory location.</p>
+    </header>
 
-.card {
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 18px;
-  margin-bottom: 14px;
-}
+    <!-- =========================================
+         SECTION 1: AUDIT DETAILS
+    ========================================== -->
 
-h2 { margin-top: 0; font-size: 1.25rem; }
-h3, h4 { margin-top: 0; }
-label { display: grid; gap: 6px; margin-bottom: 14px; font-weight: 600; }
-input, select {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #bcc5cf;
-  border-radius: 8px;
-  background: #fff;
-}
+    <section class="card collapsible-card" id="setupCard">
 
-button {
-  border: 0;
-  border-radius: 8px;
-  padding: 11px 14px;
-  background: var(--accent);
-  color: #fff;
-  font-weight: 700;
-}
-button.secondary { background: #465365; }
-button.danger { background: var(--danger); }
-.icon-btn { background: transparent; color: #333; font-size: 28px; padding: 0 6px; }
+      <div class="collapsible-heading">
+        <div>
+          <h2>1. Audit details</h2>
+          <span id="setupStatus" class="section-progress">
+            Not completed
+          </span>
+        </div>
 
-.button-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
-.hint { color: var(--muted); margin: 6px 0 12px; font-size: .92rem; }
-.small-text { font-size: .9rem; color: #344054; }
-.label { display:block; color: var(--muted); font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; margin-bottom:5px; }
-.status-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin: 12px 0; }
-.badge { display:inline-block; padding:5px 8px; border-radius:999px; font-size:.82rem; font-weight:700; }
-.badge.bad { background:#fee4e2; color:#912018; }
-.badge.good { background:#dcfae6; color:#05603a; }
+        <button
+          id="setupToggleBtn"
+          class="collapse-btn"
+          type="button"
+          aria-label="Expand or collapse audit details"
+          aria-expanded="true"
+        >▼</button>
+      </div>
 
-/* Collapsible selfie and audit sections */
-.collapsible-heading,
-.section-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
+      <div id="setupBody" class="collapsible-body">
 
-.collapsible-heading h2,
-.section-heading h3 {
-  margin-bottom: 4px;
-}
+        <label for="officerSelect">
+          Audit Officer
+          <select id="officerSelect" required>
+            <option value="">Select officer</option>
+            <option value="Officer A">Ng Wei Hong</option>
+            <option value="Officer B">Chen Hanjie</option>
+            <option value="Officer C">Tan Chu Mei</option>
+          </select>
+        </label>
 
-.collapse-btn {
-  background: transparent;
-  color: #344054;
-  padding: 8px 10px;
-  font-size: 1.15rem;
-  line-height: 1;
-  transition: transform .2s ease;
-}
+        <!-- Shown after officer selection -->
+        <div id="assignmentDetails" hidden>
 
-.collapse-btn:hover { background: #f2f4f7; }
-.collapsed .collapsible-body,
-.collapsed .section-body { display: none; }
-.collapsed .collapse-btn { transform: rotate(-90deg); }
+          <label for="auditDateTime">
+            Audit Date & Time
+            <input
+              id="auditDateTime"
+              type="text"
+              readonly
+              placeholder="Automatically recorded"
+            />
+          </label>
 
-.camera-stage {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  background: #111;
-  border-radius: 10px;
-  overflow: hidden;
-}
-.camera-stage.large { max-height: 70vh; }
-.camera-stage video {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
+          <p class="hint">
+            Date and time are automatically recorded
+            when the audit officer is selected.
+          </p>
 
-/* Selfie uses a face guide. Audit photos use the onion-skin image instead. */
-.overlay { position:absolute; inset:0; pointer-events:none; z-index:3; }
-.overlay:not(.selfie-overlay)::before { display: none; }
-.selfie-overlay::before {
-  content:"";
-  position:absolute;
-  inset:12% 25%;
-  border:3px dashed rgba(255,255,255,.9);
-  border-radius:45% 45% 42% 42%;
-  box-shadow:0 0 0 9999px rgba(0,0,0,.14);
-}
+          <!-- Assigned premises -->
+          <fieldset class="premise-fieldset">
 
-/* Reference image displayed over the live rear-camera feed only. */
-.onion-skin {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  opacity: 0.25;
-  pointer-events: none;
-  user-select: none;
-  z-index: 2;
-}
+            <legend>Assigned Premise</legend>
 
-.preview-slot img, .mini-preview img { width:100%; display:block; border-radius:8px; }
-.preview-slot { margin-top:12px; max-width:280px; }
-.mini-preview {
-  background:#eef1f4;
-  aspect-ratio:4/3;
-  border-radius:8px;
-  display:grid;
-  place-items:center;
-  color:#7b8794;
-  overflow:hidden;
-  margin-bottom:8px;
-}
-.mini-preview:empty::after { content:"Not captured"; }
+            <label class="premise-option">
+              <input
+                type="radio"
+                name="premiseChoice"
+                value="am"
+              />
+              <span>
+                <strong>ABC Coffee Shop</strong>
+                <small>AM Assignment</small>
+              </span>
+            </label>
 
-.audit-section { border-top:1px solid var(--border); padding:16px 0; }
-.audit-section:first-child { border-top:0; padding-top:0; }
-.section-progress { font-weight:800; color:var(--accent); }
-.section-help { color:var(--muted); margin-top:8px; }
-.capture-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-.capture-item { border:1px solid var(--border); border-radius:10px; padding:12px; }
-.capture-item h4 { margin-bottom:8px; }
-.capture-shot-btn { width:100%; }
+            <label class="premise-option">
+              <input
+                type="radio"
+                name="premiseChoice"
+                value="pm"
+              />
+              <span>
+                <strong>Habibi Coffee Shop</strong>
+                <small>PM Assignment</small>
+              </span>
+            </label>
 
-.summary-box { border:1px solid var(--border); background:#f8fafc; padding:12px; border-radius:8px; white-space:pre-line; }
-.quality-message { margin-top:10px; padding:9px 11px; border-radius:8px; background:#f2f4f7; color:#344054; }
-.quality-message.warn { background:#fff4e5; color:#854a0e; }
-.quality-message.ok { background:#e7f8ef; color:#075c3b; }
+            <label class="premise-option">
+              <input
+                type="radio"
+                name="premiseChoice"
+                value="other"
+              />
+              <span>
+                <strong>Others</strong>
+                <small>Ad-hoc Inspection</small>
+              </span>
+            </label>
 
-#captureDialog { width:min(760px, 96vw); border:0; border-radius:14px; padding:0; }
-#captureDialog::backdrop { background:rgba(0,0,0,.72); }
-.dialog-inner { padding:16px; }
-.dialog-title-row { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+          </fieldset>
 
-@media (max-width: 640px) {
-  .app-shell { padding:10px; }
-  .status-grid, .capture-grid { grid-template-columns:1fr; }
-  .card { padding:14px; }
-}
+          <!-- Only visible when Others is selected -->
+          <div id="otherPremiseGroup" hidden>
+
+            <label for="otherPremiseInput">
+              Ad-hoc Premise Name
+              <input
+                id="otherPremiseInput"
+                type="text"
+                placeholder="Enter premise name"
+                autocomplete="organization"
+              />
+            </label>
+
+          </div>
+
+          <!-- Location and device -->
+          <div class="status-grid">
+
+            <div>
+              <span class="label">Location</span>
+              <span
+                id="locationStatus"
+                class="badge bad"
+              >
+                Not captured
+              </span>
+            </div>
+
+            <div>
+              <span class="label">Device</span>
+              <span
+                id="deviceStatus"
+                class="small-text"
+              >
+                Detecting…
+              </span>
+            </div>
+
+          </div>
+
+          <button
+            id="locationBtn"
+            class="secondary"
+            type="button"
+          >
+            Enable location
+          </button>
+
+          <p id="locationDetails" class="hint">
+            GPS location is mandatory before proceeding.
+          </p>
+
+        </div>
+      </div>
+    </section>
+
+
+    <!-- =========================================
+         SECTION 2: OFFICER SELFIE
+    ========================================== -->
+
+    <section
+      class="card collapsible-card"
+      id="selfieCard"
+    >
+
+      <div class="collapsible-heading">
+
+        <div>
+          <h2>2. Officer selfie</h2>
+          <span
+            id="selfieStatus"
+            class="section-progress"
+          >
+            Not completed
+          </span>
+        </div>
+
+        <button
+          id="selfieToggleBtn"
+          class="collapse-btn"
+          type="button"
+          aria-label="Expand or collapse officer selfie section"
+          aria-expanded="true"
+        >▼</button>
+
+      </div>
+
+      <div
+        id="selfieBody"
+        class="collapsible-body"
+      >
+
+        <p class="hint">
+          Take a live front-camera selfie before
+          starting the audit.
+        </p>
+
+        <div class="camera-stage">
+
+          <video
+            id="camera"
+            playsinline
+            autoplay
+            muted
+          ></video>
+
+          <div
+            id="overlay"
+            class="overlay selfie-overlay"
+            aria-hidden="true"
+          ></div>
+
+          <canvas
+            id="captureCanvas"
+            hidden
+          ></canvas>
+
+        </div>
+
+        <div class="button-row">
+
+          <button
+            id="startSelfieBtn"
+            type="button"
+          >
+            Start
+          </button>
+
+          <button
+            id="captureSelfieBtn"
+            type="button"
+            disabled
+          >
+            Capture
+          </button>
+
+        </div>
+
+        <div
+          id="selfiePreview"
+          class="preview-slot"
+        ></div>
+
+      </div>
+    </section>
+
+
+    <!-- =========================================
+         SECTION 3: AUDIT PHOTOGRAPHS
+    ========================================== -->
+
+    <section
+      class="card"
+      id="auditCard"
+    >
+
+      <h2>3. Audit photos</h2>
+
+      <p class="hint">
+        Each section requires 2 live photographs:
+        one overview and one close-up.
+        The rear camera is used automatically.
+      </p>
+
+      <div id="sectionsContainer"></div>
+
+    </section>
+
+
+    <!-- =========================================
+         SECTION 4: REVIEW AND EXPORT
+    ========================================== -->
+
+    <section class="card">
+
+      <h2>4. Review & export</h2>
+
+      <div
+        id="completionSummary"
+        class="summary-box"
+      >
+        Complete the required fields and captures.
+      </div>
+
+      <div class="button-row">
+
+        <button
+          id="downloadBtn"
+          type="button"
+          disabled
+        >
+          Download audit package
+        </button>
+
+        <button
+          id="resetBtn"
+          class="danger"
+          type="button"
+        >
+          Reset audit
+        </button>
+
+      </div>
+
+      <p class="hint">
+        This GitHub Pages prototype exports a JSON
+        audit package containing photographs,
+        location and capture metadata.
+      </p>
+
+    </section>
+
+  </main>
+
+
+  <!-- =========================================
+       AUDIT SECTION TEMPLATE
+  ========================================== -->
+
+  <template id="sectionTemplate">
+
+    <article class="audit-section">
+
+      <div class="section-heading">
+
+        <div>
+          <h3></h3>
+          <span class="section-progress">0/2</span>
+        </div>
+
+        <button
+          class="collapse-btn section-toggle-btn"
+          type="button"
+          aria-label="Expand or collapse section"
+          aria-expanded="true"
+        >▼</button>
+
+      </div>
+
+      <div class="section-body">
+
+        <p class="section-help"></p>
+
+        <div class="capture-grid">
+
+          <div
+            class="capture-item"
+            data-shot="overview"
+          >
+
+            <h4>Overview</h4>
+
+            <div class="mini-preview"></div>
+
+            <button
+              class="capture-shot-btn"
+              type="button"
+            >
+              Take overview
+            </button>
+
+          </div>
+
+          <div
+            class="capture-item"
+            data-shot="closeup"
+          >
+
+            <h4>Close-up</h4>
+
+            <div class="mini-preview"></div>
+
+            <button
+              class="capture-shot-btn"
+              type="button"
+            >
+              Take close-up
+            </button>
+
+          </div>
+
+        </div>
+      </div>
+    </article>
+  </template>
+
+
+  <!-- =========================================
+       LIVE AUDIT CAMERA DIALOG
+  ========================================== -->
+
+  <dialog id="captureDialog">
+
+    <div class="dialog-inner">
+
+      <div class="dialog-title-row">
+
+        <div>
+          <h3 id="dialogTitle">Capture</h3>
+          <p
+            id="dialogHint"
+            class="hint"
+          ></p>
+        </div>
+
+        <button
+          id="closeDialogBtn"
+          class="icon-btn"
+          type="button"
+          aria-label="Close"
+        >
+          ×
+        </button>
+
+      </div>
+
+      <div class="camera-stage large">
+
+        <video
+          id="auditCamera"
+          playsinline
+          autoplay
+          muted
+        ></video>
+
+        <!-- 25% opacity reference image -->
+        <img
+          id="auditOnionSkin"
+          class="onion-skin"
+          src=""
+          alt=""
+          aria-hidden="true"
+        />
+
+        <div
+          id="auditOverlay"
+          class="overlay"
+          aria-hidden="true"
+        ></div>
+
+        <canvas
+          id="auditCanvas"
+          hidden
+        ></canvas>
+
+      </div>
+
+      <div
+        id="qualityMessage"
+        class="quality-message"
+      >
+        Align the live image as closely as possible
+        with the example guide.
+      </div>
+
+      <div class="button-row">
+
+        <button
+          id="captureAuditBtn"
+          type="button"
+        >
+          Capture
+        </button>
+
+      </div>
+
+    </div>
+  </dialog>
+
+  <script src="app.js" defer></script>
+
+</body>
+</html>
